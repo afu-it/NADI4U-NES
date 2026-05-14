@@ -370,7 +370,7 @@
                     <button
                       id="programListSortBtn"
                       onclick="toggleSort()"
-                      class="h-7 px-3 flex items-center justify-center gap-1 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-purple-600 hover:border-purple-300 transition-colors cursor-pointer"
+                      class="h-7 px-3 flex items-center justify-center gap-1 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-purple-600 hover:border-purple-300 transition-colors cursor-pointer hidden"
                       title="Sort"
                       type="button"
                     >
@@ -378,49 +378,49 @@
                       <span class="text-[8px] font-semibold">Sort</span>
                     </button>
                   </div>
-                </div>
-              </div>
-              <div class="mt-2 flex items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center justify-start gap-2">
-                  <button
-                      id="programListSearchBtn"
-                      onclick="toggleNadi4uSearch()"
-                      class="hidden w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 transition-colors cursor-pointer"
-                      title="Search Smart Services NADI4U"
-                      aria-label="Search Smart Services NADI4U"
-                      type="button"
-                    >
-                      <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
-                    </button>
-                    <button
-                      onclick="toggleFilter()"
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
-                      title="Filter"
-                      aria-label="Filter"
-                      type="button"
-                    >
-                      <i class="fa-solid fa-filter text-[10px]"></i>
-                    </button>
-                </div>
-                <div class="flex flex-wrap items-center justify-end gap-2 ml-auto">
-                  <button
-                    id="programListSyncBtn"
-                    onclick="syncNadi4uFromProgramList(event)"
-                    class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
-                    type="button"
-                    title="Sync NADI4U"
-                    aria-label="Sync NADI4U"
-                  >
-                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
-                  </button>
-                  <button
-                    onclick="toggleCalendarMini(event)"
-                    class="h-7 px-2.5 rounded-full flex items-center gap-1 text-[8px] font-semibold text-slate-600 bg-white border border-slate-200 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
-                    title="Calendar"
-                    type="button"
-                  >
-                    <i class="fa-solid fa-calendar text-xs"></i> Calendar
-                  </button>
+                  <div class="mt-1 flex w-full items-center justify-between gap-2 border-t border-slate-100 pt-2">
+                    <div class="flex flex-wrap items-center justify-start gap-2">
+                      <button
+                        id="programListSearchBtn"
+                        onclick="toggleNadi4uSearch()"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 transition-colors cursor-pointer"
+                        title="Search Smart Services NADI4U"
+                        aria-label="Search Smart Services NADI4U"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                      </button>
+                      <button
+                        onclick="toggleFilter()"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
+                        title="Filter"
+                        aria-label="Filter"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-filter text-[10px]"></i>
+                      </button>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-end gap-2 ml-auto">
+                      <button
+                        id="programListSyncBtn"
+                        onclick="syncNadi4uFromProgramList(event)"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
+                        type="button"
+                        title="Sync NADI4U"
+                        aria-label="Sync NADI4U"
+                      >
+                        <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                      </button>
+                      <button
+                        onclick="toggleCalendarMini(event)"
+                        class="h-7 px-2.5 rounded-full flex items-center gap-1 text-[8px] font-semibold text-slate-600 bg-white border border-slate-200 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
+                        title="Calendar"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-calendar text-xs"></i> Calendar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
