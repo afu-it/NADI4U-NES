@@ -23,7 +23,7 @@
           --shadow-card: 0 2px 10px -2px rgba(0, 0, 0, 0.05);
         }
       }
-      
+
       .offday-line-m { position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 16px; height: 2.5px; background-color: #00aff0; border-radius: 2px; }
       .offday-line-am { position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 16px; height: 2.5px; background-color: #90cf53; border-radius: 2px; }
       .program-list-animating { opacity: 0; }
@@ -36,9 +36,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/leave-system.css" />
-    <link rel="stylesheet" href="css/reminder-system.css" />
-    <link rel="stylesheet" href="css/kpi-system.css" />
     <script>
       (function () {
         const createMemoryStorage = function () {
@@ -139,44 +136,6 @@
               </div>
             </div>
 
-            <!-- Reminder Button -->
-            <button
-              id="reminderBtn"
-              onclick="toggleReminderPanel()"
-              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
-              title="Reminders"
-              aria-expanded="false"
-              aria-controls="reminderOverlay"
-            >
-              <i class="fa-solid fa-bell text-[#2228a4] text-xs"></i>
-              <span id="reminderBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-white text-[9px] flex items-center justify-center font-bold">0</span>
-            </button>
-
-            <!-- KPI Button -->
-            <button
-              id="kpiBtn"
-              onclick="handleKpiButtonClick()"
-              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
-              title="KPI Tracking"
-              aria-expanded="false"
-              aria-controls="kpiOverlay"
-            >
-              <i class="fa-solid fa-bullseye text-[#2228a4] text-xs"></i>
-              <span class="ml-1">KPI</span>
-              <span id="kpiBadge" class="hidden absolute -top-1 -right-2 min-w-[20px] h-4 px-1 bg-red-500 text-white text-[9px] flex items-center justify-center font-bold rounded-full border-2 border-white">0</span>
-            </button>
-
-            <!-- Leave Button -->
-            <button
-              id="leaveBtn"
-              onclick="showNADIAvailability()"
-              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center gap-1 transition-colors cursor-pointer"
-              title="Leave Management"
-            >
-              <i class="fa-solid fa-calendar-days"></i>
-              <span>Leave</span>
-            </button>
-
             <!-- Announcement Link -->
             <a
               href="announcements.html"
@@ -261,7 +220,7 @@
                     <i class="fa-solid fa-chevron-right text-xs"></i>
                   </button>
                 </div>
-              
+
 <div class="grid grid-cols-7 mb-2 border-b border-slate-100 pb-2">
                 <div class="text-center text-[10px] font-bold text-slate-400 uppercase">SUN</div>
                 <div class="text-center text-[10px] font-bold text-slate-400 uppercase">MON</div>
@@ -1528,7 +1487,7 @@
                        <option value="PM" selected>PM</option>
                      </select>
                   </div>
-                  
+
                   <div class="mt-1 pt-1 border-t border-dashed border-slate-200">
                     <label class="flex items-center gap-2 cursor-pointer mb-1.5">
                       <input
@@ -2326,7 +2285,7 @@
               </button>
             </div>
           </div>
-          
+
           <form id="staffLoginForm" onsubmit="handleStaffLogin(event)" class="p-6 space-y-4">
             <div>
               <div class="form-label mb-2">Select Your Site</div>
@@ -2334,7 +2293,7 @@
                 <!-- Sites will be loaded here as radio buttons -->
               </div>
             </div>
-            
+
             <div>
               <div class="form-label">Select Your Role</div>
               <div class="grid grid-cols-2 gap-3">
@@ -2401,7 +2360,7 @@
             <button type="submit" class="w-full btn btn-primary btn-lg">
               <i class="fa-solid fa-right-to-bracket"></i> Login
             </button>
-            
+
             <div class="relative">
               <div class="absolute inset-0 flex items-center">
                 <div class="w-full border-t border-slate-200"></div>
@@ -2410,28 +2369,28 @@
                 <span class="bg-white px-2 text-slate-500 font-semibold">or</span>
               </div>
             </div>
-            
+
             <button type="button" onclick="showSupervisorLogin()" class="w-full text-sm text-slate-600 hover:text-nadi font-semibold py-2 hover:bg-slate-50 rounded transition-colors">
               <i class="fa-solid fa-user-shield mr-1"></i> Login as Supervisor
             </button>
           </form>
-          
+
           <!-- Supervisor Login Form (Hidden by default) -->
           <form id="supervisorLoginForm" onsubmit="handleSupervisorLogin(event)" class="p-6 space-y-4 hidden" autocomplete="off">
             <div>
               <label for="supervisorUsername" class="form-label">Supervisor Username</label>
               <input type="text" id="supervisorUsername" class="form-input" placeholder="Enter username" required autocomplete="off" />
             </div>
-            
+
             <div>
               <label for="supervisorPassword" class="form-label">Password</label>
               <input type="password" id="supervisorPassword" class="form-input" placeholder="Enter password" required autocomplete="off" />
             </div>
-            
+
             <button type="submit" class="w-full btn btn-primary btn-lg">
               <i class="fa-solid fa-shield-halved"></i> Login as Supervisor
             </button>
-            
+
             <button type="button" onclick="showStaffLogin()" class="w-full text-sm text-slate-600 hover:text-blue-600 font-semibold py-2">
               <i class="fa-solid fa-arrow-left text-xs mr-1"></i> Back to Staff Login
             </button>
@@ -2443,11 +2402,11 @@
     <!-- Load scripts -->
     <!-- 1. Security utilities -->
     <script src="js/password-utils.js"></script>
-    
+
     <!-- 2. Application configuration (includes Supabase credentials) -->
     <script src="js/config.js"></script>
     <script src="js/clipboard-utils.js"></script>
-    
+
     <!-- 3. Application logic -->
     <script src="js/app.js"></script>
     <script src="js/leave-integrated.js"></script>
