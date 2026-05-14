@@ -6425,6 +6425,7 @@ function renderEventList() {
       emptyTitle: "No Today Programs found",
       emptySubtitle:
         "No Smart Services NADI4U programs match current filter for today.",
+      floatPagination: true,
     });
   }
 
