@@ -4893,12 +4893,16 @@ function isTopAlignedPrioritySection(section) {
 }
 
 function normalizeBookmarkLabel(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function shouldHideBookmarkButton(button) {
   const normalizedLabel = normalizeBookmarkLabel(button?.label);
-  return normalizedLabel.includes("webmail") && normalizedLabel.includes("samudra");
+  return (
+    normalizedLabel.includes("webmail") && normalizedLabel.includes("samudra")
+  );
 }
 
 function getDisplayBookmarkLabel(label) {
@@ -6300,11 +6304,10 @@ function renderProgramEventSection(rootContainer, options = {}) {
   sectionEl.className = "space-y-3";
 
   const summaryBar = document.createElement("div");
-  summaryBar.className =
-    "flex flex-col items-center justify-center text-center gap-1";
+  summaryBar.className = "flex items-baseline justify-center text-center gap-2";
   summaryBar.innerHTML = `
     <h3 class="text-base sm:text-lg font-bold uppercase tracking-[0.18em] text-slate-700" style="font-family: var(--font-family-display);">${escapeHtml(sectionLabel)}</h3>
-    <span class="text-[11px] font-semibold text-slate-400">${eventList.length} listed</span>
+    <span class="text-[11px] font-semibold text-slate-400 whitespace-nowrap">${eventList.length} listed</span>
   `;
   sectionEl.appendChild(summaryBar);
 
