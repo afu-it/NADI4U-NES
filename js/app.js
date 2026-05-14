@@ -9,16 +9,26 @@ function toLocalISOString(date) {
 }
 
 function isValidDateParts(year, month, day) {
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  )
+    return false;
   if (month < 1 || month > 12 || day < 1 || day > 31) return false;
   const candidate = new Date(year, month - 1, day);
-  return candidate.getFullYear() === year
-    && candidate.getMonth() === month - 1
-    && candidate.getDate() === day;
+  return (
+    candidate.getFullYear() === year &&
+    candidate.getMonth() === month - 1 &&
+    candidate.getDate() === day
+  );
 }
 
 function isoDateToDisplay(isoDate) {
-  const match = typeof isoDate === "string" ? isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/) : null;
+  const match =
+    typeof isoDate === "string"
+      ? isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      : null;
   if (!match) return "";
 
   const year = parseInt(match[1], 10);
@@ -84,7 +94,13 @@ function sanitizeHTML(html) {
   if (typeof DOMPurify !== "undefined") {
     return DOMPurify.sanitize(html, {
       ADD_TAGS: ["iframe"],
-      ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "target"],
+      ADD_ATTR: [
+        "allow",
+        "allowfullscreen",
+        "frameborder",
+        "scrolling",
+        "target",
+      ],
       FORBID_TAGS: ["script", "style", "form"],
     });
   }
@@ -96,7 +112,8 @@ function sanitizeHTML(html) {
 function linkifyPlainTextUrlsInElement(rootElement) {
   if (!rootElement || typeof document === "undefined") return;
 
-  const showTextFilter = typeof NodeFilter !== "undefined" ? NodeFilter.SHOW_TEXT : 4;
+  const showTextFilter =
+    typeof NodeFilter !== "undefined" ? NodeFilter.SHOW_TEXT : 4;
   const walker = document.createTreeWalker(rootElement, showTextFilter);
   const textNodes = [];
   let node = walker.nextNode();
@@ -109,7 +126,11 @@ function linkifyPlainTextUrlsInElement(rootElement) {
       textValue.includes("https://") ||
       /\b(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my\b/i.test(textValue);
     if (hasUrlLikeText) {
-      if (parentTagName !== "a" && parentTagName !== "script" && parentTagName !== "style") {
+      if (
+        parentTagName !== "a" &&
+        parentTagName !== "script" &&
+        parentTagName !== "style"
+      ) {
         textNodes.push(node);
       }
     }
@@ -124,7 +145,9 @@ function linkifyPlainTextUrlsInElement(rootElement) {
       return trimmed;
     }
 
-    const nadiDomainMatch = trimmed.match(/^((?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my)(\/[^\s<>"']*)?$/i);
+    const nadiDomainMatch = trimmed.match(
+      /^((?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my)(\/[^\s<>"']*)?$/i,
+    );
     if (nadiDomainMatch) {
       const host = nadiDomainMatch[1];
       const path = nadiDomainMatch[2] || "/";
@@ -137,7 +160,8 @@ function linkifyPlainTextUrlsInElement(rootElement) {
 
   textNodes.forEach((textNode) => {
     const textValue = textNode.nodeValue || "";
-    const urlRegex = /((?:https?:\/\/[^\s<>"']+)|(?:\b(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my(?:\/[^\s<>"']*)?))/gi;
+    const urlRegex =
+      /((?:https?:\/\/[^\s<>"']+)|(?:\b(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my(?:\/[^\s<>"']*)?))/gi;
     let lastIndex = 0;
     let hasMatch = false;
     let match = urlRegex.exec(textValue);
@@ -149,9 +173,13 @@ function linkifyPlainTextUrlsInElement(rootElement) {
       const fullUrl = match[1];
       const punctuationMatch = fullUrl.match(/[),.;!?]+$/);
       const trailingPunctuation = punctuationMatch ? punctuationMatch[0] : "";
-      const cleanUrl = trailingPunctuation ? fullUrl.slice(0, -trailingPunctuation.length) : fullUrl;
+      const cleanUrl = trailingPunctuation
+        ? fullUrl.slice(0, -trailingPunctuation.length)
+        : fullUrl;
       if (startIndex > lastIndex) {
-        fragment.appendChild(document.createTextNode(textValue.slice(lastIndex, startIndex)));
+        fragment.appendChild(
+          document.createTextNode(textValue.slice(lastIndex, startIndex)),
+        );
       }
 
       const linkEl = document.createElement("a");
@@ -190,9 +218,12 @@ function sanitizeHTMLWithLinks(html) {
     linkifyPlainTextUrlsInElement(temp);
     temp.querySelectorAll("a").forEach((a) => {
       const href = String(a.getAttribute("href") || "").trim();
-      const needsHttps = href && !/^(https?:\/\/|mailto:|tel:|#|\/)/i.test(href);
+      const needsHttps =
+        href && !/^(https?:\/\/|mailto:|tel:|#|\/)/i.test(href);
       if (needsHttps) {
-        const nadiHrefMatch = href.match(/^((?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my)(\/[^\s<>"']*)?$/i);
+        const nadiHrefMatch = href.match(
+          /^((?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.nadi\.my)(\/[^\s<>"']*)?$/i,
+        );
         if (nadiHrefMatch) {
           const host = nadiHrefMatch[1];
           const path = nadiHrefMatch[2] || "/";
@@ -207,7 +238,10 @@ function sanitizeHTMLWithLinks(html) {
     });
     return temp.innerHTML;
   }
-  return sanitized.replace(/<a\s+/gi, '<a target="_blank" rel="noopener noreferrer" ');
+  return sanitized.replace(
+    /<a\s+/gi,
+    '<a target="_blank" rel="noopener noreferrer" ',
+  );
 }
 
 function escapeAttribute(value) {
@@ -225,9 +259,14 @@ function getPlainTextFromHtml(html) {
   if (typeof document !== "undefined") {
     const temp = document.createElement("div");
     temp.innerHTML = value;
-    return (temp.textContent || temp.innerText || "").replace(/\u00a0/g, " ").trim();
+    return (temp.textContent || temp.innerText || "")
+      .replace(/\u00a0/g, " ")
+      .trim();
   }
-  return value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").trim();
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
 }
 
 function hasProgramInfoValue(info, images, assumeUnknownHasInfo = false) {
@@ -262,15 +301,24 @@ const appStorage = window.safeStorage || {
     return null;
   },
   setItem() {},
-  removeItem() {}
+  removeItem() {},
 };
 
-function formatDate(dateStr, options = { weekday: "short", day: "numeric", month: "short", year: "numeric" }) {
+function formatDate(
+  dateStr,
+  options = {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  },
+) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", options);
 }
 
 function getAutoSelectedDateForMonth(year, month) {
-  const isCurrentLocalMonth = year === today.getFullYear() && month === today.getMonth();
+  const isCurrentLocalMonth =
+    year === today.getFullYear() && month === today.getMonth();
   if (isCurrentLocalMonth) {
     return toLocalISOString(today);
   }
@@ -336,38 +384,38 @@ let events = [];
 
 // Skeleton Loading Functions
 function showCalendarSkeleton() {
-  const calendarGrid = document.getElementById('calendarGrid');
-  const calendarSkeleton = document.getElementById('calendarSkeleton');
+  const calendarGrid = document.getElementById("calendarGrid");
+  const calendarSkeleton = document.getElementById("calendarSkeleton");
   if (calendarGrid && calendarSkeleton) {
-    calendarGrid.classList.add('hidden');
-    calendarSkeleton.classList.remove('hidden');
+    calendarGrid.classList.add("hidden");
+    calendarSkeleton.classList.remove("hidden");
   }
 }
 
 function hideCalendarSkeleton() {
-  const calendarGrid = document.getElementById('calendarGrid');
-  const calendarSkeleton = document.getElementById('calendarSkeleton');
+  const calendarGrid = document.getElementById("calendarGrid");
+  const calendarSkeleton = document.getElementById("calendarSkeleton");
   if (calendarGrid && calendarSkeleton) {
-    calendarGrid.classList.remove('hidden');
-    calendarSkeleton.classList.add('hidden');
+    calendarGrid.classList.remove("hidden");
+    calendarSkeleton.classList.add("hidden");
   }
 }
 
 function showEventListSkeleton() {
-  const eventListContainer = document.getElementById('eventListContainer');
-  const eventListSkeleton = document.getElementById('eventListSkeleton');
+  const eventListContainer = document.getElementById("eventListContainer");
+  const eventListSkeleton = document.getElementById("eventListSkeleton");
   if (eventListContainer && eventListSkeleton) {
-    eventListContainer.classList.add('hidden');
-    eventListSkeleton.classList.remove('hidden');
+    eventListContainer.classList.add("hidden");
+    eventListSkeleton.classList.remove("hidden");
   }
 }
 
 function hideEventListSkeleton() {
-  const eventListContainer = document.getElementById('eventListContainer');
-  const eventListSkeleton = document.getElementById('eventListSkeleton');
+  const eventListContainer = document.getElementById("eventListContainer");
+  const eventListSkeleton = document.getElementById("eventListSkeleton");
   if (eventListContainer && eventListSkeleton) {
-    eventListContainer.classList.remove('hidden');
-    eventListSkeleton.classList.add('hidden');
+    eventListContainer.classList.remove("hidden");
+    eventListSkeleton.classList.add("hidden");
   }
 }
 
@@ -384,7 +432,8 @@ function hideAllSkeletons() {
 // Ensure events is always an array
 function ensureEventsArray() {
   if (!Array.isArray(events)) {
-    if (window.DEBUG_MODE) console.warn("Events is not an array, resetting to empty array");
+    if (window.DEBUG_MODE)
+      console.warn("Events is not an array, resetting to empty array");
     events = [];
   }
 }
@@ -414,18 +463,20 @@ let siteSettingsBackup = null;
 // OPTIMIZATION: Caching variables
 // =====================================================
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-const EVENT_SUMMARY_SELECT_COLUMNS = "id,title,start,end,category,subcategory,time,secondTime,links,registrationLinks,submitLinks";
+const EVENT_SUMMARY_SELECT_COLUMNS =
+  "id,title,start,end,category,subcategory,time,secondTime,links,registrationLinks,submitLinks";
 const EVENT_DETAIL_SELECT_COLUMNS = "id,info,images";
 const EVENT_DETAIL_FALLBACK_SELECT_COLUMNS = "id,info";
 const EVENT_DETAIL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 const MAX_PROGRAM_INFO_BYTES = 120 * 1024; // 120 KB
 const MAX_PROGRAM_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 const PROGRAM_IMAGE_BUCKET = "announcement-images";
-const PROGRAM_IMAGE_DISABLED_MSG = "Program images are disabled until the `images` column exists in Supabase.";
+const PROGRAM_IMAGE_DISABLED_MSG =
+  "Program images are disabled until the `images` column exists in Supabase.";
 let eventsCache = {
   data: null,
   timestamp: null,
-  monthKey: null  // Store which month this cache is for
+  monthKey: null, // Store which month this cache is for
 };
 const eventDetailsCache = new Map();
 
@@ -433,12 +484,12 @@ function clearEventsCache() {
   eventsCache = {
     data: null,
     timestamp: null,
-    monthKey: null
+    monthKey: null,
   };
   try {
-    appStorage.removeItem('events_cache');
+    appStorage.removeItem("events_cache");
   } catch (e) {
-    if (window.DEBUG_MODE) console.warn('Could not clear events cache:', e);
+    if (window.DEBUG_MODE) console.warn("Could not clear events cache:", e);
   }
 }
 
@@ -458,68 +509,76 @@ function containsEmbeddedDataImage(html) {
 // =====================================================
 // OPTIMIZATION: Load events for specific month
 // =====================================================
-  async function loadEventsForMonth(year, month, forceRefresh = false) {
-    const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
-    const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
-    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-  
+async function loadEventsForMonth(year, month, forceRefresh = false) {
+  const firstDay = new Date(year, month, 1).toISOString().split("T")[0];
+  const lastDay = new Date(year, month + 1, 0).toISOString().split("T")[0];
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+
   // Check cache first
-  if (!forceRefresh &&
-      eventsCache.monthKey === monthKey && 
-      eventsCache.data && 
-      eventsCache.timestamp && 
-      (Date.now() - eventsCache.timestamp) < CACHE_DURATION) {
-    if (window.DEBUG_MODE) console.log('✅ Using cached events for', monthKey);
+  if (
+    !forceRefresh &&
+    eventsCache.monthKey === monthKey &&
+    eventsCache.data &&
+    eventsCache.timestamp &&
+    Date.now() - eventsCache.timestamp < CACHE_DURATION
+  ) {
+    if (window.DEBUG_MODE) console.log("✅ Using cached events for", monthKey);
     return eventsCache.data;
   }
-  
-  if (window.DEBUG_MODE) console.log('📥 Loading events for', monthKey, '...');
 
-    const queryEventsForMonth = (columns) => supabaseClient
-      .from('events')
+  if (window.DEBUG_MODE) console.log("📥 Loading events for", monthKey, "...");
+
+  const queryEventsForMonth = (columns) =>
+    supabaseClient
+      .from("events")
       .select(columns)
-      .lte('start', lastDay)
-      .gte('end', firstDay)
-      .order('start', { ascending: true });
+      .lte("start", lastDay)
+      .gte("end", firstDay)
+      .order("start", { ascending: true });
 
-    let { data, error } = await queryEventsForMonth(EVENT_SUMMARY_SELECT_COLUMNS);
+  let { data, error } = await queryEventsForMonth(EVENT_SUMMARY_SELECT_COLUMNS);
 
-    if (error) {
-      console.error('❌ Error loading events for month:', error);
-      return [];
-    }
-  
+  if (error) {
+    console.error("❌ Error loading events for month:", error);
+    return [];
+  }
+
   const eventsArray = data || [];
-  
+
   // Update cache
   eventsCache = {
     data: eventsArray,
     timestamp: Date.now(),
-    monthKey: monthKey
+    monthKey: monthKey,
   };
-  
+
   // Also save to localStorage for persistence across sessions
   try {
-    appStorage.setItem('events_cache', JSON.stringify({
-      data: eventsArray,
-      timestamp: Date.now(),
-      monthKey: monthKey
-    }));
+    appStorage.setItem(
+      "events_cache",
+      JSON.stringify({
+        data: eventsArray,
+        timestamp: Date.now(),
+        monthKey: monthKey,
+      }),
+    );
   } catch (e) {
-    if (window.DEBUG_MODE) console.warn('Could not save events to localStorage cache:', e);
+    if (window.DEBUG_MODE)
+      console.warn("Could not save events to localStorage cache:", e);
   }
-  
-  if (window.DEBUG_MODE) console.log(`✅ Loaded ${eventsArray.length} events for ${monthKey}`);
+
+  if (window.DEBUG_MODE)
+    console.log(`✅ Loaded ${eventsArray.length} events for ${monthKey}`);
   return eventsArray;
 }
 
 async function loadEventsForDateRange(startDate, endDate) {
   const { data, error } = await supabaseClient
-    .from('events')
+    .from("events")
     .select(EVENT_SUMMARY_SELECT_COLUMNS)
-    .lte('start', endDate)
-    .gte('end', startDate)
-    .order('start', { ascending: true });
+    .lte("start", endDate)
+    .gte("end", startDate)
+    .order("start", { ascending: true });
 
   if (error) throw error;
   return data || [];
@@ -538,7 +597,7 @@ function normalizeProgramImages(images) {
       return {
         url: url,
         path: img.path || null,
-        name: img.name || ""
+        name: img.name || "",
       };
     })
     .filter(Boolean);
@@ -548,12 +607,15 @@ function cloneProgramImages(images) {
   return normalizeProgramImages(images).map((img) => ({
     url: img.url,
     path: img.path || null,
-    name: img.name || ""
+    name: img.name || "",
   }));
 }
 
 function areProgramImagesEqual(left, right) {
-  return JSON.stringify(cloneProgramImages(left)) === JSON.stringify(cloneProgramImages(right));
+  return (
+    JSON.stringify(cloneProgramImages(left)) ===
+    JSON.stringify(cloneProgramImages(right))
+  );
 }
 
 function setProgramImagesEnabled(isEnabled) {
@@ -593,7 +655,8 @@ async function ensureProgramImagesFeatureSupport() {
       setProgramImagesEnabled(true);
     }
   } catch (error) {
-    if (window.DEBUG_MODE) console.warn("Program image capability check failed:", error);
+    if (window.DEBUG_MODE)
+      console.warn("Program image capability check failed:", error);
   }
 
   programImagesCapabilityChecked = true;
@@ -606,10 +669,14 @@ async function loadEventDetailsById(eventId, forceRefresh = false) {
   }
 
   const cached = eventDetailsCache.get(eventId);
-  if (!forceRefresh && cached && (Date.now() - cached.timestamp) < EVENT_DETAIL_CACHE_DURATION) {
+  if (
+    !forceRefresh &&
+    cached &&
+    Date.now() - cached.timestamp < EVENT_DETAIL_CACHE_DURATION
+  ) {
     return {
       info: typeof cached.info === "string" ? cached.info : "",
-      images: cloneProgramImages(cached.images)
+      images: cloneProgramImages(cached.images),
     };
   }
 
@@ -635,13 +702,13 @@ async function loadEventDetailsById(eventId, forceRefresh = false) {
 
   const details = {
     info: typeof data?.info === "string" ? data.info : "",
-    images: programImagesEnabled ? normalizeProgramImages(data?.images) : []
+    images: programImagesEnabled ? normalizeProgramImages(data?.images) : [],
   };
 
   eventDetailsCache.set(eventId, {
     info: details.info,
     images: cloneProgramImages(details.images),
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 
   const eventInList = events.find((eventItem) => eventItem.id === eventId);
@@ -661,9 +728,14 @@ async function loadEventInfoById(eventId, forceRefresh = false) {
 }
 
 async function prefetchEventDetailsForVisibleEventIds(eventIds) {
-  if (!Array.isArray(eventIds) || eventIds.length === 0 || !supabaseClient) return;
+  if (!Array.isArray(eventIds) || eventIds.length === 0 || !supabaseClient)
+    return;
 
-  const uniqueIds = [...new Set(eventIds.filter((id) => id !== null && id !== undefined && id !== ""))];
+  const uniqueIds = [
+    ...new Set(
+      eventIds.filter((id) => id !== null && id !== undefined && id !== ""),
+    ),
+  ];
   if (!uniqueIds.length) return;
 
   const now = Date.now();
@@ -671,15 +743,20 @@ async function prefetchEventDetailsForVisibleEventIds(eventIds) {
 
   uniqueIds.forEach((eventId) => {
     const cached = eventDetailsCache.get(eventId);
-    if (cached && (now - cached.timestamp) < EVENT_DETAIL_CACHE_DURATION) {
-      const eventInList = events.find((eventItem) => String(eventItem.id) === String(eventId));
+    if (cached && now - cached.timestamp < EVENT_DETAIL_CACHE_DURATION) {
+      const eventInList = events.find(
+        (eventItem) => String(eventItem.id) === String(eventId),
+      );
       if (eventInList) {
         eventInList.info = typeof cached.info === "string" ? cached.info : "";
         if (programImagesEnabled) {
           eventInList.images = cloneProgramImages(cached.images);
         }
       }
-      setProgramInfoIndicatorColor(eventId, hasProgramInfoValue(cached.info, cached.images, false));
+      setProgramInfoIndicatorColor(
+        eventId,
+        hasProgramInfoValue(cached.info, cached.images, false),
+      );
       return;
     }
 
@@ -718,16 +795,18 @@ async function prefetchEventDetailsForVisibleEventIds(eventIds) {
       const row = rowsById.get(String(eventId));
       const details = {
         info: typeof row?.info === "string" ? row.info : "",
-        images: programImagesEnabled ? normalizeProgramImages(row?.images) : []
+        images: programImagesEnabled ? normalizeProgramImages(row?.images) : [],
       };
 
       eventDetailsCache.set(eventId, {
         info: details.info,
         images: cloneProgramImages(details.images),
-        timestamp: timestamp
+        timestamp: timestamp,
       });
 
-      const eventInList = events.find((eventItem) => String(eventItem.id) === String(eventId));
+      const eventInList = events.find(
+        (eventItem) => String(eventItem.id) === String(eventId),
+      );
       if (eventInList) {
         eventInList.info = details.info;
         if (programImagesEnabled) {
@@ -735,10 +814,17 @@ async function prefetchEventDetailsForVisibleEventIds(eventIds) {
         }
       }
 
-      setProgramInfoIndicatorColor(eventId, hasProgramInfoValue(details.info, details.images, false));
+      setProgramInfoIndicatorColor(
+        eventId,
+        hasProgramInfoValue(details.info, details.images, false),
+      );
     });
   } catch (error) {
-    if (window.DEBUG_MODE) console.warn("Failed to prefetch event details for list indicators:", error);
+    if (window.DEBUG_MODE)
+      console.warn(
+        "Failed to prefetch event details for list indicators:",
+        error,
+      );
   } finally {
     idsToFetch.forEach((eventId) => {
       prefetchEventDetailsInFlight.delete(String(eventId));
@@ -751,28 +837,35 @@ async function prefetchEventDetailsForVisibleEventIds(eventIds) {
 // =====================================================
 async function loadEventsWithCache() {
   showAllSkeletons();
-  
+
   // Try to load from localStorage cache first
   try {
-    const cached = appStorage.getItem('events_cache');
+    const cached = appStorage.getItem("events_cache");
     if (cached) {
       const cache = JSON.parse(cached);
       const cacheAge = Date.now() - (cache.timestamp || 0);
 
       // Check if cache is for current month and less than 5 minutes old
-      const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+      const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
 
-      if (cacheAge < CACHE_DURATION &&
-          cache.monthKey === currentMonthKey &&
-          Array.isArray(cache.data)) {
-        if (window.DEBUG_MODE) console.log('✅ Using cached events (age:', Math.round(cacheAge/1000), 'seconds)');
+      if (
+        cacheAge < CACHE_DURATION &&
+        cache.monthKey === currentMonthKey &&
+        Array.isArray(cache.data)
+      ) {
+        if (window.DEBUG_MODE)
+          console.log(
+            "✅ Using cached events (age:",
+            Math.round(cacheAge / 1000),
+            "seconds)",
+          );
         events = cache.data;
 
         // Update in-memory cache
         eventsCache = {
           data: cache.data,
           timestamp: cache.timestamp,
-          monthKey: cache.monthKey
+          monthKey: cache.monthKey,
         };
 
         hideAllSkeletons();
@@ -782,7 +875,7 @@ async function loadEventsWithCache() {
       }
     }
   } catch (e) {
-    if (window.DEBUG_MODE) console.warn('Could not read events cache:', e);
+    if (window.DEBUG_MODE) console.warn("Could not read events cache:", e);
   }
 
   // Load from Supabase if no valid cache
@@ -802,18 +895,28 @@ async function backupSiteSettings() {
   siteSettingsBackup = JSON.parse(JSON.stringify(siteSettings));
   // Also save to localStorage as secondary backup
   try {
-    appStorage.setItem("nadi_siteSettings_backup", JSON.stringify(siteSettings));
+    appStorage.setItem(
+      "nadi_siteSettings_backup",
+      JSON.stringify(siteSettings),
+    );
   } catch (e) {
-    if (window.DEBUG_MODE) console.warn("Could not save backup to localStorage:", e);
+    if (window.DEBUG_MODE)
+      console.warn("Could not save backup to localStorage:", e);
   }
   // Save backup to Supabase as tertiary backup - use ID 2 for backup
   try {
-    await supabaseClient.from('site_settings').upsert({
-      id: 2,
-      settings: siteSettingsBackup
-    }, { onConflict: 'id' }).catch(() => {
-      // Backup might fail, ignore
-    });
+    await supabaseClient
+      .from("site_settings")
+      .upsert(
+        {
+          id: 2,
+          settings: siteSettingsBackup,
+        },
+        { onConflict: "id" },
+      )
+      .catch(() => {
+        // Backup might fail, ignore
+      });
   } catch (e) {
     // Ignore Supabase backup errors
   }
@@ -823,16 +926,24 @@ async function restoreSiteSettings() {
   // Try Supabase backup first - use ID 2 for backup
   try {
     const { data: backupData, error } = await supabaseClient
-      .from('site_settings')
-      .select('settings')
-      .eq('id', 2)
+      .from("site_settings")
+      .select("settings")
+      .eq("id", 2)
       .single();
-    
-    if (!error && backupData?.settings && (backupData.settings.sections?.length > 0 || backupData.settings.managerOffdays?.length > 0)) {
+
+    if (
+      !error &&
+      backupData?.settings &&
+      (backupData.settings.sections?.length > 0 ||
+        backupData.settings.managerOffdays?.length > 0)
+    ) {
       siteSettings = backupData.settings;
       siteSettingsBackup = backupData.settings;
       try {
-        appStorage.setItem("nadi_siteSettings_backup", JSON.stringify(backupData.settings));
+        appStorage.setItem(
+          "nadi_siteSettings_backup",
+          JSON.stringify(backupData.settings),
+        );
       } catch (e) {}
       renderCustomLinks();
       renderCalendar();
@@ -843,9 +954,13 @@ async function restoreSiteSettings() {
   } catch (e) {
     if (window.DEBUG_MODE) console.warn("Could not restore from Supabase:", e);
   }
-  
+
   // Try memory backup first
-  if (siteSettingsBackup && (siteSettingsBackup.sections?.length > 0 || siteSettingsBackup.managerOffdays?.length > 0)) {
+  if (
+    siteSettingsBackup &&
+    (siteSettingsBackup.sections?.length > 0 ||
+      siteSettingsBackup.managerOffdays?.length > 0)
+  ) {
     siteSettings = JSON.parse(JSON.stringify(siteSettingsBackup));
     renderCustomLinks();
     renderCalendar();
@@ -869,7 +984,8 @@ async function restoreSiteSettings() {
       }
     }
   } catch (e) {
-    if (window.DEBUG_MODE) console.warn("Could not restore from localStorage:", e);
+    if (window.DEBUG_MODE)
+      console.warn("Could not restore from localStorage:", e);
   }
   return false;
 }
@@ -877,8 +993,9 @@ async function restoreSiteSettings() {
 // Backup will be created after data loads from Supabase
 
 // Make restoreData available globally
-window.restoreData = function() {
-  if (window.DEBUG_MODE) console.log("Attempting to restore data from backup...");
+window.restoreData = function () {
+  if (window.DEBUG_MODE)
+    console.log("Attempting to restore data from backup...");
   if (restoreSiteSettings()) {
     if (window.DEBUG_MODE) console.log("✓ Data restored successfully!");
     return true;
@@ -888,7 +1005,8 @@ window.restoreData = function() {
   }
 };
 
-const ANNOUNCEMENT_SELECT_COLUMNS = "id,title,content,category,ssoMain,ssoSub,dueDate,isUrgent,created_at";
+const ANNOUNCEMENT_SELECT_COLUMNS =
+  "id,title,content,category,ssoMain,ssoSub,dueDate,isUrgent,created_at";
 const LATEST_ANNOUNCEMENT_SELECT_COLUMNS = "id,created_at";
 let announcements = [];
 let latestAnnouncementMeta = null;
@@ -965,144 +1083,198 @@ const NADI4U_KPI_TITLE_RULES = [
   {
     category: "wellbeing",
     subcategory: "CARE",
-    patterns: [/\bnadi[\s-]*care\b/i, /\bnadicare\b/i, /\bsihat\s+ramadan\b/i]
+    patterns: [/\bnadi[\s-]*care\b/i, /\bnadicare\b/i, /\bsihat\s+ramadan\b/i],
   },
   {
     category: "entrepreneur",
     subcategory: "Preneur",
-    patterns: [/\bnadi[\s-]*preneur\b/i, /\bnadipreneur\b/i]
+    patterns: [/\bnadi[\s-]*preneur\b/i, /\bnadipreneur\b/i],
   },
   {
     category: "entrepreneur",
     subcategory: "Kidventure",
-    patterns: [/\bkids?\s*venture\b/i, /\bkidventure\b/i]
+    patterns: [/\bkids?\s*venture\b/i, /\bkidventure\b/i],
   },
   {
     category: "entrepreneur",
     subcategory: "EmpowHer",
-    patterns: [/\bempow\s*her\b/i, /\bempowerher\b/i]
+    patterns: [/\bempow\s*her\b/i, /\bempowerher\b/i],
   },
   {
     category: "learning",
     subcategory: "DiLea",
-    patterns: [/\bdilea\b/i]
+    patterns: [/\bdilea\b/i],
   },
   {
     category: "learning",
     subcategory: "Mahir",
-    patterns: [/\bmahir\s+baiki\s+gajet\b/i, /\bmahir\b/i]
+    patterns: [/\bmahir\s+baiki\s+gajet\b/i, /\bmahir\b/i],
   },
   {
     category: "awareness",
     subcategory: "KIS",
-    patterns: [/\bkempen\s+internet\s+selamat\b/i, /\(\s*kis\s*\)/i, /\bkis\b/i]
-  }
+    patterns: [
+      /\bkempen\s+internet\s+selamat\b/i,
+      /\(\s*kis\s*\)/i,
+      /\bkis\b/i,
+    ],
+  },
 ];
 const NADI4U_PILLAR_BUTTON_CONFIG = [
-  { key: NADI4U_PILLAR_ENTREPRENEUR, id: "nadi4uPillarBtnEntrepreneur", active: "bg-yellow-400 text-yellow-950 border-yellow-400", idle: "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50", disabled: "bg-slate-100 text-slate-400 border-slate-200" },
-  { key: NADI4U_PILLAR_LEARNING, id: "nadi4uPillarBtnLearning", active: "bg-blue-500 text-white border-blue-500", idle: "bg-white text-blue-700 border-blue-200 hover:bg-blue-50", disabled: "bg-slate-100 text-slate-400 border-slate-200" },
-  { key: NADI4U_PILLAR_AWARENESS, id: "nadi4uPillarBtnAwareness", active: "bg-orange-500 text-white border-orange-500", idle: "bg-white text-orange-700 border-orange-200 hover:bg-orange-50", disabled: "bg-slate-100 text-slate-400 border-slate-200" },
-  { key: NADI4U_PILLAR_WELLBEING, id: "nadi4uPillarBtnWellbeing", active: "bg-violet-600 text-white border-violet-600", idle: "bg-white text-violet-700 border-violet-200 hover:bg-violet-50", disabled: "bg-slate-100 text-slate-400 border-slate-200" },
-  { key: NADI4U_PILLAR_GOV, id: "nadi4uPillarBtnGov", active: "bg-indigo-600 text-white border-indigo-600", idle: "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50", disabled: "bg-slate-100 text-slate-400 border-slate-200" }
+  {
+    key: NADI4U_PILLAR_ENTREPRENEUR,
+    id: "nadi4uPillarBtnEntrepreneur",
+    active: "bg-yellow-400 text-yellow-950 border-yellow-400",
+    idle: "bg-white text-yellow-700 border-yellow-200 hover:bg-yellow-50",
+    disabled: "bg-slate-100 text-slate-400 border-slate-200",
+  },
+  {
+    key: NADI4U_PILLAR_LEARNING,
+    id: "nadi4uPillarBtnLearning",
+    active: "bg-blue-500 text-white border-blue-500",
+    idle: "bg-white text-blue-700 border-blue-200 hover:bg-blue-50",
+    disabled: "bg-slate-100 text-slate-400 border-slate-200",
+  },
+  {
+    key: NADI4U_PILLAR_AWARENESS,
+    id: "nadi4uPillarBtnAwareness",
+    active: "bg-orange-500 text-white border-orange-500",
+    idle: "bg-white text-orange-700 border-orange-200 hover:bg-orange-50",
+    disabled: "bg-slate-100 text-slate-400 border-slate-200",
+  },
+  {
+    key: NADI4U_PILLAR_WELLBEING,
+    id: "nadi4uPillarBtnWellbeing",
+    active: "bg-violet-600 text-white border-violet-600",
+    idle: "bg-white text-violet-700 border-violet-200 hover:bg-violet-50",
+    disabled: "bg-slate-100 text-slate-400 border-slate-200",
+  },
+  {
+    key: NADI4U_PILLAR_GOV,
+    id: "nadi4uPillarBtnGov",
+    active: "bg-indigo-600 text-white border-indigo-600",
+    idle: "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50",
+    disabled: "bg-slate-100 text-slate-400 border-slate-200",
+  },
 ];
 const NADI4U_KPI_PILLAR_RULES = [
   {
     category: "entrepreneur",
-    patterns: [/\bentrepreneur(ship)?\b/i, /\bkeusahawan(an)?\b/i, /\busahawan\b/i]
+    patterns: [
+      /\bentrepreneur(ship)?\b/i,
+      /\bkeusahawan(an)?\b/i,
+      /\busahawan\b/i,
+    ],
   },
   {
     category: "learning",
-    patterns: [/\blifelong\s+learning\b/i, /\bpembelajaran\b/i, /\bsepanjang\s+hayat\b/i]
+    patterns: [
+      /\blifelong\s+learning\b/i,
+      /\bpembelajaran\b/i,
+      /\bsepanjang\s+hayat\b/i,
+    ],
   },
   {
     category: "wellbeing",
-    patterns: [/\bwell\s*being\b/i, /\bwellbeing\b/i, /\bkesejahteraan\b/i]
+    patterns: [/\bwell\s*being\b/i, /\bwellbeing\b/i, /\bkesejahteraan\b/i],
   },
   {
     category: "awareness",
-    patterns: [/\bawareness\b/i, /\bkesedaran\b/i]
+    patterns: [/\bawareness\b/i, /\bkesedaran\b/i],
   },
   {
     category: "gov",
-    patterns: [/\bgov(?:ernment)?\s*initiative\b/i, /\binisiatif\b/i, /\bkerajaan\b/i, /\bmydigital\s*id\b/i]
-  }
+    patterns: [
+      /\bgov(?:ernment)?\s*initiative\b/i,
+      /\binisiatif\b/i,
+      /\bkerajaan\b/i,
+      /\bmydigital\s*id\b/i,
+    ],
+  },
 ];
 const NADI4U_KPI_SUBCATEGORY_RULES = [
   {
     category: "entrepreneur",
     subcategory: "Preneur",
-    patterns: [/\bpreneur\b/i]
+    patterns: [/\bpreneur\b/i],
   },
   {
     category: "entrepreneur",
     subcategory: "EmpowHer",
-    patterns: [/\bempow\s*her\b/i, /\bempowerher\b/i]
+    patterns: [/\bempow\s*her\b/i, /\bempowerher\b/i],
   },
   {
     category: "entrepreneur",
     subcategory: "Kidventure",
-    patterns: [/\bkids?\s*venture\b/i, /\bkidventure\b/i]
+    patterns: [/\bkids?\s*venture\b/i, /\bkidventure\b/i],
   },
   {
     category: "learning",
     subcategory: "eKelas Keusahawanan",
-    patterns: [/\bekelas\b.*\bkeusahawanan\b/i, /\bkeusahawanan\b.*\bekelas\b/i]
+    patterns: [
+      /\bekelas\b.*\bkeusahawanan\b/i,
+      /\bkeusahawanan\b.*\bekelas\b/i,
+    ],
   },
   {
     category: "learning",
     subcategory: "DiLea",
-    patterns: [/\bdilea\b/i]
+    patterns: [/\bdilea\b/i],
   },
   {
     category: "learning",
     subcategory: "Cybersecurity",
-    patterns: [/\bcyber\s*security\b/i, /\bcybersecurity\b/i]
+    patterns: [/\bcyber\s*security\b/i, /\bcybersecurity\b/i],
   },
   {
     category: "learning",
     subcategory: "eKelas Maxis",
-    patterns: [/\bekelas\b.*\bmaxis\b/i, /\bmaxis\b.*\bekelas\b/i]
+    patterns: [/\bekelas\b.*\bmaxis\b/i, /\bmaxis\b.*\bekelas\b/i],
   },
   {
     category: "learning",
     subcategory: "Tinytechies",
-    patterns: [/\btiny\s*techies\b/i, /\btinytechies\b/i]
+    patterns: [/\btiny\s*techies\b/i, /\btinytechies\b/i],
   },
   {
     category: "learning",
     subcategory: "eSport",
-    patterns: [/\be\s*sport\b/i, /\besport\b/i]
+    patterns: [/\be\s*sport\b/i, /\besport\b/i],
   },
   {
     category: "learning",
     subcategory: "Mahir",
-    patterns: [/\bmahir\b/i]
+    patterns: [/\bmahir\b/i],
   },
   {
     category: "wellbeing",
     subcategory: "CARE",
-    patterns: [/\bcare\b/i, /\bnadi[\s-]*care\b/i, /\bsihat\s+ramadan\b/i]
+    patterns: [/\bcare\b/i, /\bnadi[\s-]*care\b/i, /\bsihat\s+ramadan\b/i],
   },
   {
     category: "wellbeing",
     subcategory: "MenWell",
-    patterns: [/\bmen\s*well\b/i, /\bmenwell\b/i]
+    patterns: [/\bmen\s*well\b/i, /\bmenwell\b/i],
   },
   {
     category: "wellbeing",
     subcategory: "FlourisHer",
-    patterns: [/\bflouris\s*her\b/i, /\bflourisher\b/i]
+    patterns: [/\bflouris\s*her\b/i, /\bflourisher\b/i],
   },
   {
     category: "awareness",
     subcategory: "KIS",
-    patterns: [/\bkempen\s+internet\s+selamat\b/i, /\(\s*kis\s*\)/i, /\bkis\b/i]
+    patterns: [
+      /\bkempen\s+internet\s+selamat\b/i,
+      /\(\s*kis\s*\)/i,
+      /\bkis\b/i,
+    ],
   },
   {
     category: "gov",
     subcategory: "MyDigital ID",
-    patterns: [/\bmy\s*digital\s*id\b/i, /\bmydigital\s*id\b/i]
-  }
+    patterns: [/\bmy\s*digital\s*id\b/i, /\bmydigital\s*id\b/i],
+  },
 ];
 
 function getNadi4uStorageItem(key) {
@@ -1181,8 +1353,13 @@ function formatNadi4uTimeRange(startTime, endTime) {
   if (start && end) {
     const startDate = new Date(`2000-01-01T${String(startTime).trim()}`);
     const endDate = new Date(`2000-01-01T${String(endTime).trim()}`);
-    if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())) {
-      const diffHours = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60));
+    if (
+      !Number.isNaN(startDate.getTime()) &&
+      !Number.isNaN(endDate.getTime())
+    ) {
+      const diffHours = Math.round(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60),
+      );
       durationLabel = ` (${diffHours}h)`;
     }
   }
@@ -1206,7 +1383,10 @@ function extractUrlsFromProgramInfo(infoContent) {
 
   if (typeof document !== "undefined") {
     const temp = document.createElement("div");
-    temp.innerHTML = typeof sanitizeHTMLWithLinks === "function" ? sanitizeHTMLWithLinks(value) : value;
+    temp.innerHTML =
+      typeof sanitizeHTMLWithLinks === "function"
+        ? sanitizeHTMLWithLinks(value)
+        : value;
     temp.querySelectorAll("a").forEach((anchor) => {
       pushUrl(anchor.getAttribute("href"));
     });
@@ -1229,13 +1409,15 @@ function extractUrlsFromProgramInfo(infoContent) {
 
 function mergeRegistrationLinksWithProgramInfo(registrationLinks, infoContent) {
   const baseLinks = Array.isArray(registrationLinks)
-    ? registrationLinks.filter((link) => link && typeof link.url === "string" && link.url.trim())
+    ? registrationLinks.filter(
+        (link) => link && typeof link.url === "string" && link.url.trim(),
+      )
     : [];
 
   const result = baseLinks.map((link) => ({
     platform: link.platform || "NES",
     url: String(link.url || "").trim(),
-    message: link.message || undefined
+    message: link.message || undefined,
   }));
 
   const existingUrlSet = new Set(result.map((link) => link.url.toLowerCase()));
@@ -1268,39 +1450,44 @@ async function copyToClipboard(text, btn) {
   function showToast(message) {
     if (!btn) return;
     // Remove any existing toast first
-    document.querySelectorAll('.copy-toast').forEach(el => el.remove());
+    document.querySelectorAll(".copy-toast").forEach((el) => el.remove());
     const rect = btn.getBoundingClientRect();
-    const toast = document.createElement('span');
-    toast.className = 'copy-toast';
+    const toast = document.createElement("span");
+    toast.className = "copy-toast";
     toast.textContent = message;
     toast.style.cssText = [
-      'position:fixed',
+      "position:fixed",
       `top:${Math.round(rect.bottom + 5)}px`,
       `left:${Math.round(rect.left + rect.width / 2)}px`,
-      'transform:translateX(-50%)',
-      'white-space:nowrap',
-      'font-size:10px',
-      'line-height:1.4',
-      'background:#1e293b',
-      'color:#fff',
-      'padding:2px 8px',
-      'border-radius:4px',
-      'pointer-events:none',
-      'z-index:99999',
-      'opacity:1',
-      'transition:opacity 0.3s'
-    ].join(';');
+      "transform:translateX(-50%)",
+      "white-space:nowrap",
+      "font-size:10px",
+      "line-height:1.4",
+      "background:#1e293b",
+      "color:#fff",
+      "padding:2px 8px",
+      "border-radius:4px",
+      "pointer-events:none",
+      "z-index:99999",
+      "opacity:1",
+      "transition:opacity 0.3s",
+    ].join(";");
     document.body.appendChild(toast);
     setTimeout(() => {
-      toast.style.opacity = '0';
+      toast.style.opacity = "0";
       setTimeout(() => toast.remove(), 300);
     }, 1500);
   }
 
   try {
-    const result = clipboardUtils && typeof clipboardUtils.copyText === "function"
-      ? await clipboardUtils.copyText(text)
-      : { ok: false, manual: false, error: new Error("Clipboard utils unavailable") };
+    const result =
+      clipboardUtils && typeof clipboardUtils.copyText === "function"
+        ? await clipboardUtils.copyText(text)
+        : {
+            ok: false,
+            manual: false,
+            error: new Error("Clipboard utils unavailable"),
+          };
 
     if (result?.ok) {
       if (icon) icon.className = "fa-solid fa-check text-xs text-green-600";
@@ -1314,7 +1501,8 @@ async function copyToClipboard(text, btn) {
     }
 
     if (result?.manual) {
-      if (icon) icon.className = "fa-regular fa-keyboard text-xs text-amber-600";
+      if (icon)
+        icon.className = "fa-regular fa-keyboard text-xs text-amber-600";
       if (btn) btn.title = "Manual copy opened";
       showToast("Title Text Copied");
       setTimeout(() => {
@@ -1341,16 +1529,24 @@ function toIsoDateFromDateTime(value) {
 }
 
 function compareNadi4uScheduleRows(left, right) {
-  const dateCompare = String(left?.schedule_date || "").localeCompare(String(right?.schedule_date || ""));
+  const dateCompare = String(left?.schedule_date || "").localeCompare(
+    String(right?.schedule_date || ""),
+  );
   if (dateCompare !== 0) return dateCompare;
 
   const dayLeft = Number.parseInt(left?.day_number, 10);
   const dayRight = Number.parseInt(right?.day_number, 10);
-  if (Number.isFinite(dayLeft) && Number.isFinite(dayRight) && dayLeft !== dayRight) {
+  if (
+    Number.isFinite(dayLeft) &&
+    Number.isFinite(dayRight) &&
+    dayLeft !== dayRight
+  ) {
     return dayLeft - dayRight;
   }
 
-  return String(left?.start_time || "").localeCompare(String(right?.start_time || ""));
+  return String(left?.start_time || "").localeCompare(
+    String(right?.start_time || ""),
+  );
 }
 
 function getStoredNadi4uEventMetaMap() {
@@ -1367,7 +1563,9 @@ function getStoredNadi4uEventMetaMap() {
 }
 
 function getTakwimSmartServiceGroup(categoryName) {
-  const normalized = String(categoryName || "").trim().toLowerCase();
+  const normalized = String(categoryName || "")
+    .trim()
+    .toLowerCase();
   if (!normalized) return "other";
   if (normalized.includes("nadi4u")) return "nadi4u";
   if (normalized.includes("nadi2u")) return "nadi2u";
@@ -1376,7 +1574,10 @@ function getTakwimSmartServiceGroup(categoryName) {
 
 function getPrimaryNadi4uSiteId(siteValue) {
   if (Array.isArray(siteValue)) {
-    const first = siteValue.find((item) => item !== null && item !== undefined && String(item).trim() !== "");
+    const first = siteValue.find(
+      (item) =>
+        item !== null && item !== undefined && String(item).trim() !== "",
+    );
     return first !== undefined ? String(first).trim() : "";
   }
 
@@ -1390,9 +1591,7 @@ function getPrimaryNadi4uSiteId(siteValue) {
 
 function getNadi4uSiteIdList(siteValue) {
   if (Array.isArray(siteValue)) {
-    return siteValue
-      .map((item) => String(item || "").trim())
-      .filter(Boolean);
+    return siteValue.map((item) => String(item || "").trim()).filter(Boolean);
   }
 
   if (siteValue === null || siteValue === undefined) return [];
@@ -1401,48 +1600,69 @@ function getNadi4uSiteIdList(siteValue) {
   return value ? [value] : [];
 }
 
-
 const NADI_SITE_NAME_TO_ID = {
-  "Air Putih": "951", "NADI Air Putih": "951",
-  "Kebun Bunga": "952", "NADI Kebun Bunga": "952",
-  "Pulau Tikus": "953", "NADI Pulau Tikus": "953",
-  "Tanjong Bunga": "954", "NADI Tanjong Bunga": "954",
-  "Komtar": "955", "NADI Komtar": "955",
-  "Padang Kota": "956", "NADI Padang Kota": "956",
-  "Pengkalan Kota": "957", "NADI Pengkalan Kota": "957",
-  "Batu Lancang": "958", "NADI Batu Lancang": "958",
-  "Datok Keramat": "959", "NADI Datok Keramat": "959",
-  "Sungai Pinang": "960", "NADI Sungai Pinang": "960",
-  "Air Itam": "961", "NADI Air Itam": "961",
-  "Paya Terubong": "962", "NADI Paya Terubong": "962",
-  "Seri Delima": "963", "NADI Seri Delima": "963",
-  "Batu Uban": "964", "NADI Batu Uban": "964",
-  "Batu Maung": "965", "NADI Batu Maung": "965",
-  "Pantai Jerejak": "966", "NADI Pantai Jerejak": "966",
-  "Bayan Lepas": "967", "NADI Bayan Lepas": "967",
-  "Pulau Betong": "968", "NADI Pulau Betong": "968"
+  "Air Putih": "951",
+  "NADI Air Putih": "951",
+  "Kebun Bunga": "952",
+  "NADI Kebun Bunga": "952",
+  "Pulau Tikus": "953",
+  "NADI Pulau Tikus": "953",
+  "Tanjong Bunga": "954",
+  "NADI Tanjong Bunga": "954",
+  Komtar: "955",
+  "NADI Komtar": "955",
+  "Padang Kota": "956",
+  "NADI Padang Kota": "956",
+  "Pengkalan Kota": "957",
+  "NADI Pengkalan Kota": "957",
+  "Batu Lancang": "958",
+  "NADI Batu Lancang": "958",
+  "Datok Keramat": "959",
+  "NADI Datok Keramat": "959",
+  "Sungai Pinang": "960",
+  "NADI Sungai Pinang": "960",
+  "Air Itam": "961",
+  "NADI Air Itam": "961",
+  "Paya Terubong": "962",
+  "NADI Paya Terubong": "962",
+  "Seri Delima": "963",
+  "NADI Seri Delima": "963",
+  "Batu Uban": "964",
+  "NADI Batu Uban": "964",
+  "Batu Maung": "965",
+  "NADI Batu Maung": "965",
+  "Pantai Jerejak": "966",
+  "NADI Pantai Jerejak": "966",
+  "Bayan Lepas": "967",
+  "NADI Bayan Lepas": "967",
+  "Pulau Betong": "968",
+  "NADI Pulau Betong": "968",
 };
 
 function resolveNumericSiteId(siteNameOrId) {
-  if (!siteNameOrId) return '';
+  if (!siteNameOrId) return "";
   const trimmed = String(siteNameOrId).trim();
   if (/^\d{3,4}$/.test(trimmed)) return trimmed;
-  return NADI_SITE_NAME_TO_ID[trimmed] || '';
+  return NADI_SITE_NAME_TO_ID[trimmed] || "";
 }
 
 function getUserNadi4uSiteId() {
   try {
-    const leaveUser = typeof parseLeaveUserFromStorage === 'function'
-      ? parseLeaveUserFromStorage()
-      : null;
-    const mappedId = resolveNumericSiteId(leaveUser?.site_name) || resolveNumericSiteId(leaveUser?.site_id);
+    const leaveUser =
+      typeof parseLeaveUserFromStorage === "function"
+        ? parseLeaveUserFromStorage()
+        : null;
+    const mappedId =
+      resolveNumericSiteId(leaveUser?.site_name) ||
+      resolveNumericSiteId(leaveUser?.site_id);
     if (mappedId) return mappedId;
   } catch (_) {}
 
   try {
-    const settings = typeof parseNadi4uSettingsFromStorage === 'function'
-      ? parseNadi4uSettingsFromStorage()
-      : null;
+    const settings =
+      typeof parseNadi4uSettingsFromStorage === "function"
+        ? parseNadi4uSettingsFromStorage()
+        : null;
     const templateSiteId = resolveNumericSiteId(settings?.templateSiteId);
     if (templateSiteId) return templateSiteId;
 
@@ -1450,15 +1670,18 @@ function getUserNadi4uSiteId() {
     if (templateSiteName) return templateSiteName;
   } catch (_) {}
 
-  return '';
+  return "";
 }
 
 function hasActiveLeaveSession() {
   try {
-    const leaveUser = typeof parseLeaveUserFromStorage === 'function'
-      ? parseLeaveUserFromStorage()
-      : null;
-    return Boolean(leaveUser && (leaveUser.site_id != null || leaveUser.site_name));
+    const leaveUser =
+      typeof parseLeaveUserFromStorage === "function"
+        ? parseLeaveUserFromStorage()
+        : null;
+    return Boolean(
+      leaveUser && (leaveUser.site_id != null || leaveUser.site_name),
+    );
   } catch (_) {
     return false;
   }
@@ -1471,10 +1694,13 @@ function getCurrentNadi4uWeeklyViewMode() {
 }
 
 function setNadi4uWeeklyViewMode(mode) {
-  const normalizedMode = String(mode || "").trim().toLowerCase();
-  nadi4uWeeklyViewMode = normalizedMode === NADI4U_WEEKLY_VIEW_ALL
-    ? NADI4U_WEEKLY_VIEW_ALL
-    : NADI4U_WEEKLY_VIEW_RECENT;
+  const normalizedMode = String(mode || "")
+    .trim()
+    .toLowerCase();
+  nadi4uWeeklyViewMode =
+    normalizedMode === NADI4U_WEEKLY_VIEW_ALL
+      ? NADI4U_WEEKLY_VIEW_ALL
+      : NADI4U_WEEKLY_VIEW_RECENT;
 }
 
 function getNadi4uRecentWeeklyBuckets(buckets = []) {
@@ -1484,7 +1710,7 @@ function getNadi4uRecentWeeklyBuckets(buckets = []) {
   const todayIso = [
     now.getFullYear(),
     String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0")
+    String(now.getDate()).padStart(2, "0"),
   ].join("-");
   const currentBucket = buckets.find((bucket) => {
     const startDate = String(bucket?.startDate || "").trim();
@@ -1493,7 +1719,9 @@ function getNadi4uRecentWeeklyBuckets(buckets = []) {
   });
   if (currentBucket) return [currentBucket];
 
-  const recentBucketWithEvents = [...buckets].reverse().find((bucket) => (Number(bucket?.total) || 0) > 0);
+  const recentBucketWithEvents = [...buckets]
+    .reverse()
+    .find((bucket) => (Number(bucket?.total) || 0) > 0);
   if (recentBucketWithEvents) return [recentBucketWithEvents];
 
   return [buckets[buckets.length - 1]];
@@ -1512,7 +1740,9 @@ function buildNadi4uRegistrationUrl(eventId, siteValue) {
 
   const siteIdValue = getPrimaryNadi4uSiteId(siteValue);
   const base = `https://app.nadi.my/event-registration/${encodeURIComponent(eventIdValue)}`;
-  return siteIdValue ? `${base}?site_id=${encodeURIComponent(siteIdValue)}` : base;
+  return siteIdValue
+    ? `${base}?site_id=${encodeURIComponent(siteIdValue)}`
+    : base;
 }
 
 function isExcludedNadi4uProgramTitle(title) {
@@ -1522,9 +1752,16 @@ function isExcludedNadi4uProgramTitle(title) {
   if (/\btest\s*program\b/i.test(source)) return true;
   if (/\breach\b[\s\-:/|()]*\bjom\s*saring\b/i.test(source)) return true;
   if (/\bjom\s*saring\b[\s\-:/|()]*\breach\b/i.test(source)) return true;
-  if (/\btaklimat\s+pengasuhan\s+d(?:igital|gital|igtal|igitial)(?:\s+(?:2|ii))?\b/i.test(source)) return true;
+  if (
+    /\btaklimat\s+pengasuhan\s+d(?:igital|gital|igtal|igitial)(?:\s+(?:2|ii))?\b/i.test(
+      source,
+    )
+  )
+    return true;
 
-  return /\bpe(?:ng|g)asuhan\s+d(?:igital|gital|igtal|igitial)\s*(?:2|ii)\b/i.test(source);
+  return /\bpe(?:ng|g)asuhan\s+d(?:igital|gital|igtal|igitial)\s*(?:2|ii)\b/i.test(
+    source,
+  );
 }
 
 function getNadi4uKpiLabelFromTitle(title) {
@@ -1532,10 +1769,13 @@ function getNadi4uKpiLabelFromTitle(title) {
   if (!source) return null;
 
   for (const rule of NADI4U_KPI_TITLE_RULES) {
-    if (Array.isArray(rule.patterns) && rule.patterns.some((pattern) => pattern.test(source))) {
+    if (
+      Array.isArray(rule.patterns) &&
+      rule.patterns.some((pattern) => pattern.test(source))
+    ) {
       return {
         category: rule.category,
-        subcategory: rule.subcategory
+        subcategory: rule.subcategory,
       };
     }
   }
@@ -1548,7 +1788,10 @@ function getNadi4uKpiCategoryFromPillar(pillarName) {
   if (!source) return "";
 
   for (const rule of NADI4U_KPI_PILLAR_RULES) {
-    if (Array.isArray(rule.patterns) && rule.patterns.some((pattern) => pattern.test(source))) {
+    if (
+      Array.isArray(rule.patterns) &&
+      rule.patterns.some((pattern) => pattern.test(source))
+    ) {
       return rule.category;
     }
   }
@@ -1562,7 +1805,10 @@ function getNadi4uKpiSubcategoryFromText(sourceText, categoryKey = "") {
 
   for (const rule of NADI4U_KPI_SUBCATEGORY_RULES) {
     if (categoryKey && rule.category !== categoryKey) continue;
-    if (Array.isArray(rule.patterns) && rule.patterns.some((pattern) => pattern.test(source))) {
+    if (
+      Array.isArray(rule.patterns) &&
+      rule.patterns.some((pattern) => pattern.test(source))
+    ) {
       return rule.subcategory;
     }
   }
@@ -1571,14 +1817,21 @@ function getNadi4uKpiSubcategoryFromText(sourceText, categoryKey = "") {
 }
 
 function resolveNadi4uKpiLabel(eventMeta, title) {
-  const pillarLabel = typeof eventMeta?.nd_event_subcategory?.name === "string"
-    ? eventMeta.nd_event_subcategory.name.trim()
-    : "";
-  const programLabel = typeof eventMeta?.nd_event_program?.name === "string"
-    ? eventMeta.nd_event_program.name.trim()
-    : "";
-  let categoryKey = getNadi4uKpiCategoryFromPillar(pillarLabel) || getNadi4uKpiCategoryFromPillar(programLabel);
-  let subcategoryLabel = getNadi4uKpiSubcategoryFromText(programLabel, categoryKey);
+  const pillarLabel =
+    typeof eventMeta?.nd_event_subcategory?.name === "string"
+      ? eventMeta.nd_event_subcategory.name.trim()
+      : "";
+  const programLabel =
+    typeof eventMeta?.nd_event_program?.name === "string"
+      ? eventMeta.nd_event_program.name.trim()
+      : "";
+  let categoryKey =
+    getNadi4uKpiCategoryFromPillar(pillarLabel) ||
+    getNadi4uKpiCategoryFromPillar(programLabel);
+  let subcategoryLabel = getNadi4uKpiSubcategoryFromText(
+    programLabel,
+    categoryKey,
+  );
 
   if (!subcategoryLabel) {
     subcategoryLabel = getNadi4uKpiSubcategoryFromText(title, categoryKey);
@@ -1588,7 +1841,11 @@ function resolveNadi4uKpiLabel(eventMeta, title) {
   if (!categoryKey && titleMapped?.category) {
     categoryKey = titleMapped.category;
   }
-  if (!subcategoryLabel && titleMapped?.subcategory && (!categoryKey || titleMapped.category === categoryKey)) {
+  if (
+    !subcategoryLabel &&
+    titleMapped?.subcategory &&
+    (!categoryKey || titleMapped.category === categoryKey)
+  ) {
     subcategoryLabel = titleMapped.subcategory;
   }
 
@@ -1600,14 +1857,15 @@ function resolveNadi4uKpiLabel(eventMeta, title) {
     category: categoryKey || "",
     subcategory: subcategoryLabel || "",
     pillar: pillarLabel,
-    programme: programLabel
+    programme: programLabel,
   };
 }
 
 function getNadi4uProgramTypeLabel(eventMeta) {
-  const modeName = typeof eventMeta?.nd_program_mode?.name === "string"
-    ? eventMeta.nd_program_mode.name.trim()
-    : "";
+  const modeName =
+    typeof eventMeta?.nd_program_mode?.name === "string"
+      ? eventMeta.nd_program_mode.name.trim()
+      : "";
   if (modeName) return modeName;
 
   const rawMode = eventMeta?.program_mode;
@@ -1628,7 +1886,8 @@ function buildNadi4uDisplayEvents() {
 
   const scheduleByEventId = new Map();
   scheduleRows.forEach((row) => {
-    const eventId = typeof row?.event_id === "string" ? row.event_id.trim() : "";
+    const eventId =
+      typeof row?.event_id === "string" ? row.event_id.trim() : "";
     if (!eventId) return;
     if (!scheduleByEventId.has(eventId)) {
       scheduleByEventId.set(eventId, []);
@@ -1653,31 +1912,46 @@ function buildNadi4uDisplayEvents() {
 
   const userSiteId = getUserNadi4uSiteId();
   metaById.forEach((eventMeta, sourceEventId) => {
-    const categoryName = typeof eventMeta?.nd_event_category?.name === "string"
-      ? eventMeta.nd_event_category.name
-      : (typeof eventMeta?.category_name === "string" ? eventMeta.category_name : "");
+    const categoryName =
+      typeof eventMeta?.nd_event_category?.name === "string"
+        ? eventMeta.nd_event_category.name
+        : typeof eventMeta?.category_name === "string"
+          ? eventMeta.category_name
+          : "";
     if (getTakwimSmartServiceGroup(categoryName) !== "nadi4u") {
       return;
     }
 
     const eventSiteIds = getNadi4uSiteIdList(eventMeta?.site_id);
-    if (userSiteId && eventSiteIds.length > 0 && !eventSiteIds.includes(userSiteId)) {
+    if (
+      userSiteId &&
+      eventSiteIds.length > 0 &&
+      !eventSiteIds.includes(userSiteId)
+    ) {
       return;
     }
 
     const schedules = scheduleByEventId.get(sourceEventId) || [];
     const fallbackId = sourceEventId.slice(0, 8);
-    const programName = typeof eventMeta?.program_name === "string" && eventMeta.program_name.trim()
-      ? eventMeta.program_name.trim()
-      : `Smart Services NADI4U (${fallbackId})`;
+    const programName =
+      typeof eventMeta?.program_name === "string" &&
+      eventMeta.program_name.trim()
+        ? eventMeta.program_name.trim()
+        : `Smart Services NADI4U (${fallbackId})`;
     if (isExcludedNadi4uProgramTitle(programName)) {
       return;
     }
 
     const startDateFromMeta = toIsoDateFromDateTime(eventMeta?.start_datetime);
     const endDateFromMeta = toIsoDateFromDateTime(eventMeta?.end_datetime);
-    const firstScheduleDate = schedules.length > 0 ? parseDateInputToIso(schedules[0]?.schedule_date) : "";
-    const lastScheduleDate = schedules.length > 0 ? parseDateInputToIso(schedules[schedules.length - 1]?.schedule_date) : "";
+    const firstScheduleDate =
+      schedules.length > 0
+        ? parseDateInputToIso(schedules[0]?.schedule_date)
+        : "";
+    const lastScheduleDate =
+      schedules.length > 0
+        ? parseDateInputToIso(schedules[schedules.length - 1]?.schedule_date)
+        : "";
 
     const startDate = startDateFromMeta || firstScheduleDate;
     const endDate = endDateFromMeta || lastScheduleDate || startDate;
@@ -1686,21 +1960,36 @@ function buildNadi4uDisplayEvents() {
     const targetDate = getProgramListTargetDate();
     let activeSchedule = null;
     if (targetDate) {
-      activeSchedule = schedules.find((row) => parseDateInputToIso(row?.schedule_date) === targetDate) || null;
+      activeSchedule =
+        schedules.find(
+          (row) => parseDateInputToIso(row?.schedule_date) === targetDate,
+        ) || null;
     }
     if (!activeSchedule && schedules.length > 0) {
       activeSchedule = schedules[0];
     }
 
-    const startTimeRaw = typeof activeSchedule?.start_time === "string" ? activeSchedule.start_time.trim() : "";
-    const endTimeRaw = typeof activeSchedule?.end_time === "string" ? activeSchedule.end_time.trim() : "";
+    const startTimeRaw =
+      typeof activeSchedule?.start_time === "string"
+        ? activeSchedule.start_time.trim()
+        : "";
+    const endTimeRaw =
+      typeof activeSchedule?.end_time === "string"
+        ? activeSchedule.end_time.trim()
+        : "";
     const timeRange = formatNadi4uTimeRange(startTimeRaw, endTimeRaw);
 
-    const locationName = typeof eventMeta?.location_event === "string" ? eventMeta.location_event.trim() : "";
-    const description = typeof eventMeta?.description === "string" ? eventMeta.description.trim() : "";
+    const locationName =
+      typeof eventMeta?.location_event === "string"
+        ? eventMeta.location_event.trim()
+        : "";
+    const description =
+      typeof eventMeta?.description === "string"
+        ? eventMeta.description.trim()
+        : "";
     const infoParts = [
       locationName ? `Location: ${locationName}` : null,
-      description || null
+      description || null,
     ].filter(Boolean);
 
     const compositeId = `${sourceEventId}-${startDate}-${endDate}`;
@@ -1710,12 +1999,21 @@ function buildNadi4uDisplayEvents() {
     const canRegisterDirectly = hasActiveLeaveSession() && userSiteId;
     let registrationLinks = [];
     if (canRegisterDirectly) {
-      const nadi4uRegistrationUrl = buildNadi4uRegistrationUrl(sourceEventId, userSiteId);
+      const nadi4uRegistrationUrl = buildNadi4uRegistrationUrl(
+        sourceEventId,
+        userSiteId,
+      );
       if (nadi4uRegistrationUrl) {
         registrationLinks = [{ platform: "NES", url: nadi4uRegistrationUrl }];
       }
     } else {
-      registrationLinks = [{ platform: "NES", url: "https://app.nadi.my/", message: "Please login to register easily" }];
+      registrationLinks = [
+        {
+          platform: "NES",
+          url: "https://app.nadi.my/",
+          message: "Please login to register easily",
+        },
+      ];
     }
 
     result.push({
@@ -1741,7 +2039,7 @@ function buildNadi4uDisplayEvents() {
       info: infoParts.join("<br>"),
       images: [],
       schedules: schedules,
-      externalDescription: description
+      externalDescription: description,
     });
   });
 
@@ -1763,17 +2061,20 @@ function filterNadi4uMonthDataForCurrentSite(eventMetaRows, scheduleRows) {
   });
   const allowedEventIds = new Set(
     filteredEvents
-      .map((eventMeta) => (typeof eventMeta?.id === "string" ? eventMeta.id.trim() : ""))
-      .filter(Boolean)
+      .map((eventMeta) =>
+        typeof eventMeta?.id === "string" ? eventMeta.id.trim() : "",
+      )
+      .filter(Boolean),
   );
   const filteredSchedule = schedule.filter((row) => {
-    const eventId = typeof row?.event_id === "string" ? row.event_id.trim() : "";
+    const eventId =
+      typeof row?.event_id === "string" ? row.event_id.trim() : "";
     return eventId && allowedEventIds.has(eventId);
   });
 
   return {
     events: filteredEvents,
-    schedule: filteredSchedule
+    schedule: filteredSchedule,
   };
 }
 
@@ -1785,12 +2086,16 @@ function getCombinedEventListSource() {
 
 function getRecentEventListSource(sourceEvents) {
   if (!Array.isArray(sourceEvents)) return [];
-  return sourceEvents.filter((eventItem) => !(eventItem?.isExternal && eventItem?.source === "nadi4u"));
+  return sourceEvents.filter(
+    (eventItem) => !(eventItem?.isExternal && eventItem?.source === "nadi4u"),
+  );
 }
 
 function getNadi4uEventListSource(sourceEvents) {
   if (!Array.isArray(sourceEvents)) return [];
-  return sourceEvents.filter((eventItem) => eventItem?.isExternal && eventItem?.source === "nadi4u");
+  return sourceEvents.filter(
+    (eventItem) => eventItem?.isExternal && eventItem?.source === "nadi4u",
+  );
 }
 
 function getProgramListTargetDate() {
@@ -1815,7 +2120,9 @@ function normalizeNadi4uSubcategoryFilterValue(value) {
 }
 
 function parseNadi4uSubcategoryFilterSource(rawSource) {
-  const source = String(rawSource || "").trim().toLowerCase();
+  const source = String(rawSource || "")
+    .trim()
+    .toLowerCase();
   if (!source) {
     return { scope: "", weekIndex: null };
   }
@@ -1825,7 +2132,10 @@ function parseNadi4uSubcategoryFilterSource(rawSource) {
     const parsedWeekIndex = Number.parseInt(weeklyMatch[1], 10);
     return {
       scope: "weekly",
-      weekIndex: Number.isInteger(parsedWeekIndex) && parsedWeekIndex > 0 ? parsedWeekIndex : null
+      weekIndex:
+        Number.isInteger(parsedWeekIndex) && parsedWeekIndex > 0
+          ? parsedWeekIndex
+          : null,
     };
   }
 
@@ -1835,26 +2145,30 @@ function parseNadi4uSubcategoryFilterSource(rawSource) {
 
   return {
     scope: source,
-    weekIndex: null
+    weekIndex: null,
   };
 }
 
 function isMonthlyNadi4uSubcategoryFilterActive() {
-  const normalizedSubcategoryFilter = normalizeNadi4uSubcategoryFilterValue(nadi4uSubcategoryFilter);
+  const normalizedSubcategoryFilter = normalizeNadi4uSubcategoryFilterValue(
+    nadi4uSubcategoryFilter,
+  );
   if (!normalizedSubcategoryFilter) return false;
-  const filterSourceContext = parseNadi4uSubcategoryFilterSource(nadi4uSubcategoryFilterSource);
+  const filterSourceContext = parseNadi4uSubcategoryFilterSource(
+    nadi4uSubcategoryFilterSource,
+  );
   return filterSourceContext.scope === "monthly";
 }
 
 function getEventSubcategoryForNadi4uFilter(eventItem) {
-  const mappedSubcategory = eventItem?.isExternal
-    && eventItem?.source === "nadi4u"
-    && typeof eventItem?.kpiSubcategory === "string"
-    ? eventItem.kpiSubcategory
-    : "";
-  const fallbackSubcategory = typeof eventItem?.subcategory === "string"
-    ? eventItem.subcategory
-    : "";
+  const mappedSubcategory =
+    eventItem?.isExternal &&
+    eventItem?.source === "nadi4u" &&
+    typeof eventItem?.kpiSubcategory === "string"
+      ? eventItem.kpiSubcategory
+      : "";
+  const fallbackSubcategory =
+    typeof eventItem?.subcategory === "string" ? eventItem.subcategory : "";
 
   return String(mappedSubcategory || fallbackSubcategory || "").trim();
 }
@@ -1862,7 +2176,9 @@ function getEventSubcategoryForNadi4uFilter(eventItem) {
 function eventMatchesNadi4uSubcategoryFilter(eventItem, normalizedFilter) {
   if (!normalizedFilter) return true;
   const eventSubcategory = getEventSubcategoryForNadi4uFilter(eventItem);
-  return normalizeNadi4uSubcategoryFilterValue(eventSubcategory) === normalizedFilter;
+  return (
+    normalizeNadi4uSubcategoryFilterValue(eventSubcategory) === normalizedFilter
+  );
 }
 
 function getProgramListDaySectionLabel() {
@@ -1881,8 +2197,10 @@ function eventMatchesNadi4uSearch(eventItem, normalizedQuery) {
     eventItem?.kpiSubcategory,
     eventItem?.kpiCategory,
     eventItem?.subcategory,
-    eventItem?.time
-  ].join(" ").toLowerCase();
+    eventItem?.time,
+  ]
+    .join(" ")
+    .toLowerCase();
 
   const tokens = normalizedQuery.split(" ").filter(Boolean);
   return tokens.every((token) => haystack.includes(token));
@@ -1891,9 +2209,13 @@ function eventMatchesNadi4uSearch(eventItem, normalizedQuery) {
 function isNadi4uEventOnDate(eventItem, targetDate) {
   if (!eventItem || !targetDate) return false;
 
-  const schedules = Array.isArray(eventItem.schedules) ? eventItem.schedules : [];
+  const schedules = Array.isArray(eventItem.schedules)
+    ? eventItem.schedules
+    : [];
   if (schedules.length > 0) {
-    return schedules.some((row) => parseDateInputToIso(row?.schedule_date) === targetDate);
+    return schedules.some(
+      (row) => parseDateInputToIso(row?.schedule_date) === targetDate,
+    );
   }
 
   return targetDate >= eventItem.start && targetDate <= eventItem.end;
@@ -1905,7 +2227,9 @@ function getIsoWeekRange(targetIsoDate) {
     return { startDate: "", endDate: "" };
   }
 
-  const [year, month, day] = normalizedDate.split("-").map((value) => Number.parseInt(value, 10));
+  const [year, month, day] = normalizedDate
+    .split("-")
+    .map((value) => Number.parseInt(value, 10));
   const target = new Date(year, month - 1, day);
   if (Number.isNaN(target.getTime())) {
     return { startDate: "", endDate: "" };
@@ -1920,7 +2244,7 @@ function getIsoWeekRange(targetIsoDate) {
 
   return {
     startDate: toLocalISOString(startDate),
-    endDate: toLocalISOString(endDate)
+    endDate: toLocalISOString(endDate),
   };
 }
 
@@ -1932,7 +2256,11 @@ function getIsoMonthRange(year, month) {
   }
 
   const startDate = `${normalizedYear}-${String(normalizedMonth + 1).padStart(2, "0")}-01`;
-  const monthLastDay = new Date(normalizedYear, normalizedMonth + 1, 0).getDate();
+  const monthLastDay = new Date(
+    normalizedYear,
+    normalizedMonth + 1,
+    0,
+  ).getDate();
   const endDate = `${normalizedYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(monthLastDay).padStart(2, "0")}`;
   return { startDate, endDate };
 }
@@ -1944,7 +2272,11 @@ function getMonthWeekRanges(year, month) {
     return [];
   }
 
-  const monthLastDay = new Date(normalizedYear, normalizedMonth + 1, 0).getDate();
+  const monthLastDay = new Date(
+    normalizedYear,
+    normalizedMonth + 1,
+    0,
+  ).getDate();
   const ranges = [];
   let weekIndex = 1;
 
@@ -1955,7 +2287,7 @@ function getMonthWeekRanges(year, month) {
       startDay,
       endDay,
       startDate: `${normalizedYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`,
-      endDate: `${normalizedYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`
+      endDate: `${normalizedYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
     });
     weekIndex += 1;
   }
@@ -1966,11 +2298,15 @@ function getMonthWeekRanges(year, month) {
 function isNadi4uEventInDateRange(eventItem, startDate, endDate) {
   if (!eventItem || !startDate || !endDate) return false;
 
-  const schedules = Array.isArray(eventItem?.schedules) ? eventItem.schedules : [];
+  const schedules = Array.isArray(eventItem?.schedules)
+    ? eventItem.schedules
+    : [];
   if (schedules.length > 0) {
     return schedules.some((row) => {
       const scheduleDate = parseDateInputToIso(row?.schedule_date);
-      return Boolean(scheduleDate && scheduleDate >= startDate && scheduleDate <= endDate);
+      return Boolean(
+        scheduleDate && scheduleDate >= startDate && scheduleDate <= endDate,
+      );
     });
   }
 
@@ -1989,7 +2325,9 @@ function normalizeDuplicateEventTitle(title) {
 }
 
 function getNadi4uScheduleDateRange(eventItem) {
-  const schedules = Array.isArray(eventItem?.schedules) ? eventItem.schedules : [];
+  const schedules = Array.isArray(eventItem?.schedules)
+    ? eventItem.schedules
+    : [];
   const parsedDates = schedules
     .map((row) => parseDateInputToIso(row?.schedule_date))
     .filter(Boolean)
@@ -1998,19 +2336,24 @@ function getNadi4uScheduleDateRange(eventItem) {
   if (parsedDates.length > 0) {
     return {
       startDate: parsedDates[0],
-      endDate: parsedDates[parsedDates.length - 1]
+      endDate: parsedDates[parsedDates.length - 1],
     };
   }
 
   return {
     startDate: eventItem?.start || "",
-    endDate: eventItem?.end || eventItem?.start || ""
+    endDate: eventItem?.end || eventItem?.start || "",
   };
 }
 
 function getNadi4uScheduleTimeForDate(eventItem, targetDate) {
-  const schedules = Array.isArray(eventItem?.schedules) ? eventItem.schedules : [];
-  const byDate = schedules.find((row) => parseDateInputToIso(row?.schedule_date) === targetDate) || null;
+  const schedules = Array.isArray(eventItem?.schedules)
+    ? eventItem.schedules
+    : [];
+  const byDate =
+    schedules.find(
+      (row) => parseDateInputToIso(row?.schedule_date) === targetDate,
+    ) || null;
   if (byDate?.start_time) return String(byDate.start_time).trim();
   if (byDate?.end_time) return String(byDate.end_time).trim();
   return "";
@@ -2019,12 +2362,17 @@ function getNadi4uScheduleTimeForDate(eventItem, targetDate) {
 function isNadi4uMultiDayEvent(eventItem) {
   if (!(eventItem?.isExternal && eventItem?.source === "nadi4u")) return false;
   const range = getNadi4uScheduleDateRange(eventItem);
-  return Boolean(range.startDate && range.endDate && range.startDate !== range.endDate);
+  return Boolean(
+    range.startDate && range.endDate && range.startDate !== range.endDate,
+  );
 }
 
 function isRecentMultiDayEvent(eventItem) {
-  if (!eventItem || (eventItem?.isExternal && eventItem?.source === "nadi4u")) return false;
-  return Boolean(eventItem.start && eventItem.end && eventItem.start !== eventItem.end);
+  if (!eventItem || (eventItem?.isExternal && eventItem?.source === "nadi4u"))
+    return false;
+  return Boolean(
+    eventItem.start && eventItem.end && eventItem.start !== eventItem.end,
+  );
 }
 
 function dedupeNadi4uEventsByTitle(eventList) {
@@ -2051,8 +2399,12 @@ function dedupeNadi4uEventsByTitle(eventList) {
 function getNadi4uScopedFilterResult(sourceEvents) {
   const nadi4uEvents = getNadi4uEventListSource(sourceEvents);
   const normalizedSearch = normalizeNadi4uSearchQuery(nadi4uSearchQuery);
-  const normalizedSubcategoryFilter = normalizeNadi4uSubcategoryFilterValue(nadi4uSubcategoryFilter);
-  const filterSourceContext = parseNadi4uSubcategoryFilterSource(nadi4uSubcategoryFilterSource);
+  const normalizedSubcategoryFilter = normalizeNadi4uSubcategoryFilterValue(
+    nadi4uSubcategoryFilter,
+  );
+  const filterSourceContext = parseNadi4uSubcategoryFilterSource(
+    nadi4uSubcategoryFilterSource,
+  );
   const targetDate = getProgramListTargetDate();
   const monthRange = getIsoMonthRange(currentYear, currentMonth);
 
@@ -2060,53 +2412,82 @@ function getNadi4uScopedFilterResult(sourceEvents) {
   if (normalizedSubcategoryFilter.length > 0) {
     switch (filterSourceContext.scope) {
       case "day":
-        scopedEvents = nadi4uEvents.filter((eventItem) =>
-          isNadi4uEventOnDate(eventItem, targetDate) && !isNadi4uMultiDayEvent(eventItem)
+        scopedEvents = nadi4uEvents.filter(
+          (eventItem) =>
+            isNadi4uEventOnDate(eventItem, targetDate) &&
+            !isNadi4uMultiDayEvent(eventItem),
         );
         break;
       case "multi":
-        scopedEvents = nadi4uEvents.filter((eventItem) =>
-          isNadi4uEventOnDate(eventItem, targetDate) && isNadi4uMultiDayEvent(eventItem)
+        scopedEvents = nadi4uEvents.filter(
+          (eventItem) =>
+            isNadi4uEventOnDate(eventItem, targetDate) &&
+            isNadi4uMultiDayEvent(eventItem),
         );
         break;
       case "weekly": {
         const weekRanges = getMonthWeekRanges(currentYear, currentMonth);
         const targetWeek = Number.isInteger(filterSourceContext.weekIndex)
-          ? weekRanges.find((bucket) => bucket.weekIndex === filterSourceContext.weekIndex) || null
+          ? weekRanges.find(
+              (bucket) => bucket.weekIndex === filterSourceContext.weekIndex,
+            ) || null
           : null;
         if (targetWeek) {
           scopedEvents = nadi4uEvents.filter((eventItem) =>
-            isNadi4uEventInDateRange(eventItem, targetWeek.startDate, targetWeek.endDate)
+            isNadi4uEventInDateRange(
+              eventItem,
+              targetWeek.startDate,
+              targetWeek.endDate,
+            ),
           );
         } else {
           const selectedWeekRange = getIsoWeekRange(targetDate);
           scopedEvents = nadi4uEvents.filter((eventItem) =>
-            isNadi4uEventInDateRange(eventItem, selectedWeekRange.startDate, selectedWeekRange.endDate)
+            isNadi4uEventInDateRange(
+              eventItem,
+              selectedWeekRange.startDate,
+              selectedWeekRange.endDate,
+            ),
           );
         }
         break;
       }
       case "monthly":
         scopedEvents = nadi4uEvents.filter((eventItem) =>
-          isNadi4uEventInDateRange(eventItem, monthRange.startDate, monthRange.endDate)
+          isNadi4uEventInDateRange(
+            eventItem,
+            monthRange.startDate,
+            monthRange.endDate,
+          ),
         );
         break;
       default:
-        scopedEvents = nadi4uEvents.filter((eventItem) => isNadi4uEventOnDate(eventItem, targetDate));
+        scopedEvents = nadi4uEvents.filter((eventItem) =>
+          isNadi4uEventOnDate(eventItem, targetDate),
+        );
         break;
     }
   } else if (normalizedSearch.length > 0) {
     scopedEvents = nadi4uEvents;
   } else {
-    scopedEvents = nadi4uEvents.filter((eventItem) => isNadi4uEventOnDate(eventItem, targetDate));
+    scopedEvents = nadi4uEvents.filter((eventItem) =>
+      isNadi4uEventOnDate(eventItem, targetDate),
+    );
   }
 
   const deduped = dedupeNadi4uEventsByTitle(scopedEvents);
   const filteredBySubcategory = normalizedSubcategoryFilter
-    ? deduped.filter((eventItem) => eventMatchesNadi4uSubcategoryFilter(eventItem, normalizedSubcategoryFilter))
+    ? deduped.filter((eventItem) =>
+        eventMatchesNadi4uSubcategoryFilter(
+          eventItem,
+          normalizedSubcategoryFilter,
+        ),
+      )
     : deduped;
   const filteredBySearch = normalizedSearch
-    ? filteredBySubcategory.filter((eventItem) => eventMatchesNadi4uSearch(eventItem, normalizedSearch))
+    ? filteredBySubcategory.filter((eventItem) =>
+        eventMatchesNadi4uSearch(eventItem, normalizedSearch),
+      )
     : filteredBySubcategory;
 
   return {
@@ -2114,7 +2495,7 @@ function getNadi4uScopedFilterResult(sourceEvents) {
     normalizedSearch,
     normalizedSubcategoryFilter,
     filterSourceContext,
-    targetDate
+    targetDate,
   };
 }
 
@@ -2124,36 +2505,54 @@ function getFilteredNadi4uEventList(sourceEvents) {
     normalizedSearch,
     normalizedSubcategoryFilter,
     filterSourceContext,
-    targetDate
+    targetDate,
   } = getNadi4uScopedFilterResult(sourceEvents);
 
-  const applyDayMultiSplit = normalizedSubcategoryFilter.length === 0
-    && !isMonthlyNadi4uSubcategoryFilterActive();
-  const shouldSortActiveMultiDayListByEndDate = applyDayMultiSplit
-    && nadi4uListType === NADI4U_LIST_TYPE_MULTI;
+  const applyDayMultiSplit =
+    normalizedSubcategoryFilter.length === 0 &&
+    !isMonthlyNadi4uSubcategoryFilterActive();
+  const shouldSortActiveMultiDayListByEndDate =
+    applyDayMultiSplit && nadi4uListType === NADI4U_LIST_TYPE_MULTI;
   const filteredByListType = applyDayMultiSplit
     ? filteredBySearch.filter((eventItem) => {
-      const isMultiDay = isNadi4uMultiDayEvent(eventItem);
-      return nadi4uListType === NADI4U_LIST_TYPE_MULTI ? isMultiDay : !isMultiDay;
-    })
+        const isMultiDay = isNadi4uMultiDayEvent(eventItem);
+        return nadi4uListType === NADI4U_LIST_TYPE_MULTI
+          ? isMultiDay
+          : !isMultiDay;
+      })
     : filteredBySearch;
-  const shouldUseRangeBasedSorting = normalizedSearch.length > 0
-    || filterSourceContext.scope === "weekly"
-    || filterSourceContext.scope === "monthly";
+  const shouldUseRangeBasedSorting =
+    normalizedSearch.length > 0 ||
+    filterSourceContext.scope === "weekly" ||
+    filterSourceContext.scope === "monthly";
 
   return [...filteredByListType].sort((left, right) => {
     const leftRange = getNadi4uScheduleDateRange(left);
     const rightRange = getNadi4uScheduleDateRange(right);
-    const leftIsMultiDay = leftRange.startDate && leftRange.endDate && leftRange.startDate !== leftRange.endDate;
-    const rightIsMultiDay = rightRange.startDate && rightRange.endDate && rightRange.startDate !== rightRange.endDate;
-    const shouldPrioritizeMultiDayGrouping = normalizedSubcategoryFilter.length === 0
-      || filterSourceContext.scope === "weekly";
+    const leftIsMultiDay =
+      leftRange.startDate &&
+      leftRange.endDate &&
+      leftRange.startDate !== leftRange.endDate;
+    const rightIsMultiDay =
+      rightRange.startDate &&
+      rightRange.endDate &&
+      rightRange.startDate !== rightRange.endDate;
+    const shouldPrioritizeMultiDayGrouping =
+      normalizedSubcategoryFilter.length === 0 ||
+      filterSourceContext.scope === "weekly";
 
-    if (shouldPrioritizeMultiDayGrouping && leftIsMultiDay !== rightIsMultiDay) {
+    if (
+      shouldPrioritizeMultiDayGrouping &&
+      leftIsMultiDay !== rightIsMultiDay
+    ) {
       return leftIsMultiDay ? 1 : -1;
     }
 
-    if (shouldSortActiveMultiDayListByEndDate && leftIsMultiDay && rightIsMultiDay) {
+    if (
+      shouldSortActiveMultiDayListByEndDate &&
+      leftIsMultiDay &&
+      rightIsMultiDay
+    ) {
       const leftEnd = String(leftRange.endDate || "");
       const rightEnd = String(rightRange.endDate || "");
       if (leftEnd && rightEnd && leftEnd !== rightEnd) {
@@ -2168,15 +2567,25 @@ function getFilteredNadi4uEventList(sourceEvents) {
         return leftStart.localeCompare(rightStart);
       }
 
-      const leftTimeFromStart = leftStart ? getNadi4uScheduleTimeForDate(left, leftStart) : "";
-      const rightTimeFromStart = rightStart ? getNadi4uScheduleTimeForDate(right, rightStart) : "";
-      if (leftTimeFromStart && rightTimeFromStart && leftTimeFromStart !== rightTimeFromStart) {
+      const leftTimeFromStart = leftStart
+        ? getNadi4uScheduleTimeForDate(left, leftStart)
+        : "";
+      const rightTimeFromStart = rightStart
+        ? getNadi4uScheduleTimeForDate(right, rightStart)
+        : "";
+      if (
+        leftTimeFromStart &&
+        rightTimeFromStart &&
+        leftTimeFromStart !== rightTimeFromStart
+      ) {
         return leftTimeFromStart.localeCompare(rightTimeFromStart);
       }
       if (leftTimeFromStart && !rightTimeFromStart) return -1;
       if (!leftTimeFromStart && rightTimeFromStart) return 1;
 
-      return String(left?.title || "").localeCompare(String(right?.title || ""));
+      return String(left?.title || "").localeCompare(
+        String(right?.title || ""),
+      );
     }
 
     const leftTime = getNadi4uScheduleTimeForDate(left, targetDate);
@@ -2217,9 +2626,13 @@ function getNadi4uEventPillarKey(eventItem) {
 
 function filterNadi4uEventsByPillar(eventList, pillarKey) {
   if (!Array.isArray(eventList)) return [];
-  const normalizedPillarKey = String(pillarKey || "").trim().toLowerCase();
+  const normalizedPillarKey = String(pillarKey || "")
+    .trim()
+    .toLowerCase();
   if (!normalizedPillarKey) return eventList.slice();
-  return eventList.filter((eventItem) => getNadi4uEventPillarKey(eventItem) === normalizedPillarKey);
+  return eventList.filter(
+    (eventItem) => getNadi4uEventPillarKey(eventItem) === normalizedPillarKey,
+  );
 }
 
 function getNadi4uPillarAvailabilityCounts(eventList) {
@@ -2228,7 +2641,7 @@ function getNadi4uPillarAvailabilityCounts(eventList) {
     [NADI4U_PILLAR_LEARNING]: 0,
     [NADI4U_PILLAR_AWARENESS]: 0,
     [NADI4U_PILLAR_WELLBEING]: 0,
-    [NADI4U_PILLAR_GOV]: 0
+    [NADI4U_PILLAR_GOV]: 0,
   };
 
   if (!Array.isArray(eventList)) return counts;
@@ -2247,27 +2660,48 @@ function getSortedNadi4uEventListForSection(eventList, options = {}) {
   if (!Array.isArray(eventList)) return [];
 
   const normalizedSearch = String(options?.normalizedSearch || "").trim();
-  const normalizedSubcategoryFilter = String(options?.normalizedSubcategoryFilter || "").trim();
-  const filterSourceContext = options?.filterSourceContext || { scope: "", weekIndex: null };
+  const normalizedSubcategoryFilter = String(
+    options?.normalizedSubcategoryFilter || "",
+  ).trim();
+  const filterSourceContext = options?.filterSourceContext || {
+    scope: "",
+    weekIndex: null,
+  };
   const targetDate = options?.targetDate || getProgramListTargetDate();
-  const shouldSortActiveMultiDayListByEndDate = options?.sortMultiDayByEndDate === true;
-  const shouldUseRangeBasedSorting = normalizedSearch.length > 0
-    || filterSourceContext.scope === "weekly"
-    || filterSourceContext.scope === "monthly";
+  const shouldSortActiveMultiDayListByEndDate =
+    options?.sortMultiDayByEndDate === true;
+  const shouldUseRangeBasedSorting =
+    normalizedSearch.length > 0 ||
+    filterSourceContext.scope === "weekly" ||
+    filterSourceContext.scope === "monthly";
 
   return [...eventList].sort((left, right) => {
     const leftRange = getNadi4uScheduleDateRange(left);
     const rightRange = getNadi4uScheduleDateRange(right);
-    const leftIsMultiDay = leftRange.startDate && leftRange.endDate && leftRange.startDate !== leftRange.endDate;
-    const rightIsMultiDay = rightRange.startDate && rightRange.endDate && rightRange.startDate !== rightRange.endDate;
-    const shouldPrioritizeMultiDayGrouping = normalizedSubcategoryFilter.length === 0
-      || filterSourceContext.scope === "weekly";
+    const leftIsMultiDay =
+      leftRange.startDate &&
+      leftRange.endDate &&
+      leftRange.startDate !== leftRange.endDate;
+    const rightIsMultiDay =
+      rightRange.startDate &&
+      rightRange.endDate &&
+      rightRange.startDate !== rightRange.endDate;
+    const shouldPrioritizeMultiDayGrouping =
+      normalizedSubcategoryFilter.length === 0 ||
+      filterSourceContext.scope === "weekly";
 
-    if (shouldPrioritizeMultiDayGrouping && leftIsMultiDay !== rightIsMultiDay) {
+    if (
+      shouldPrioritizeMultiDayGrouping &&
+      leftIsMultiDay !== rightIsMultiDay
+    ) {
       return leftIsMultiDay ? 1 : -1;
     }
 
-    if (shouldSortActiveMultiDayListByEndDate && leftIsMultiDay && rightIsMultiDay) {
+    if (
+      shouldSortActiveMultiDayListByEndDate &&
+      leftIsMultiDay &&
+      rightIsMultiDay
+    ) {
       const leftEnd = String(leftRange.endDate || "");
       const rightEnd = String(rightRange.endDate || "");
       if (leftEnd && rightEnd && leftEnd !== rightEnd) {
@@ -2282,15 +2716,25 @@ function getSortedNadi4uEventListForSection(eventList, options = {}) {
         return leftStart.localeCompare(rightStart);
       }
 
-      const leftTimeFromStart = leftStart ? getNadi4uScheduleTimeForDate(left, leftStart) : "";
-      const rightTimeFromStart = rightStart ? getNadi4uScheduleTimeForDate(right, rightStart) : "";
-      if (leftTimeFromStart && rightTimeFromStart && leftTimeFromStart !== rightTimeFromStart) {
+      const leftTimeFromStart = leftStart
+        ? getNadi4uScheduleTimeForDate(left, leftStart)
+        : "";
+      const rightTimeFromStart = rightStart
+        ? getNadi4uScheduleTimeForDate(right, rightStart)
+        : "";
+      if (
+        leftTimeFromStart &&
+        rightTimeFromStart &&
+        leftTimeFromStart !== rightTimeFromStart
+      ) {
         return leftTimeFromStart.localeCompare(rightTimeFromStart);
       }
       if (leftTimeFromStart && !rightTimeFromStart) return -1;
       if (!leftTimeFromStart && rightTimeFromStart) return 1;
 
-      return String(left?.title || "").localeCompare(String(right?.title || ""));
+      return String(left?.title || "").localeCompare(
+        String(right?.title || ""),
+      );
     }
 
     const leftTime = getNadi4uScheduleTimeForDate(left, targetDate);
@@ -2311,7 +2755,10 @@ function getSectionedNadi4uDisplayData(sourceEvents) {
     ? scopedResult.filteredBySearch
     : [];
   const pillarCounts = getNadi4uPillarAvailabilityCounts(baseVisibleEvents);
-  const pillarFilteredEvents = filterNadi4uEventsByPillar(baseVisibleEvents, nadi4uPillarFilter);
+  const pillarFilteredEvents = filterNadi4uEventsByPillar(
+    baseVisibleEvents,
+    nadi4uPillarFilter,
+  );
   const todayEvents = [];
   const multiDayEvents = [];
 
@@ -2327,15 +2774,21 @@ function getSectionedNadi4uDisplayData(sourceEvents) {
     normalizedSearch: scopedResult.normalizedSearch,
     normalizedSubcategoryFilter: scopedResult.normalizedSubcategoryFilter,
     filterSourceContext: scopedResult.filterSourceContext,
-    targetDate: scopedResult.targetDate
+    targetDate: scopedResult.targetDate,
   };
 
   return {
     ...scopedResult,
     pillarCounts,
     activePillarFilter: nadi4uPillarFilter,
-    todayEvents: getSortedNadi4uEventListForSection(todayEvents, { ...sortOptions, sortMultiDayByEndDate: false }),
-    multiDayEvents: getSortedNadi4uEventListForSection(multiDayEvents, { ...sortOptions, sortMultiDayByEndDate: true })
+    todayEvents: getSortedNadi4uEventListForSection(todayEvents, {
+      ...sortOptions,
+      sortMultiDayByEndDate: false,
+    }),
+    multiDayEvents: getSortedNadi4uEventListForSection(multiDayEvents, {
+      ...sortOptions,
+      sortMultiDayByEndDate: true,
+    }),
   };
 }
 
@@ -2344,7 +2797,9 @@ function syncNadi4uProgramListHeightToTotals() {
   if (!eventListContainer) return;
 
   const isNadi4uView = currentProgramListView === PROGRAM_LIST_VIEW_NADI4U;
-  const isDesktopLayout = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+  const isDesktopLayout =
+    typeof window !== "undefined" &&
+    window.matchMedia("(min-width: 768px)").matches;
 
   if (!isNadi4uView) {
     eventListContainer.style.height = "";
@@ -2380,7 +2835,10 @@ function syncNadi4uProgramListHeightToTotals() {
     return;
   }
 
-  const clampedHeight = Math.max(minHeight, Math.min(calculatedHeight, maxHeight));
+  const clampedHeight = Math.max(
+    minHeight,
+    Math.min(calculatedHeight, maxHeight),
+  );
   eventListContainer.style.height = `${clampedHeight}px`;
   eventListContainer.style.maxHeight = `${clampedHeight}px`;
 }
@@ -2399,7 +2857,9 @@ function updateProgramListHeader() {
   const searchInput = document.getElementById("nadi4uSearchInput");
   const clearSearchBtn = document.getElementById("clearNadi4uSearchBtn");
   const isNadi4uView = true;
-  const sectionedData = getSectionedNadi4uDisplayData(getCombinedEventListSource());
+  const sectionedData = getSectionedNadi4uDisplayData(
+    getCombinedEventListSource(),
+  );
   const dayCount = sectionedData.todayEvents.length;
   const multiCount = sectionedData.multiDayEvents.length;
 
@@ -2443,7 +2903,10 @@ function updateProgramListHeader() {
   }
 
   if (clearSearchBtn) {
-    clearSearchBtn.classList.toggle("hidden", !nadi4uSearchQuery && !nadi4uSubcategoryFilter && !nadi4uPillarFilter);
+    clearSearchBtn.classList.toggle(
+      "hidden",
+      !nadi4uSearchQuery && !nadi4uSubcategoryFilter && !nadi4uPillarFilter,
+    );
   }
 
   if (dayBtn) {
@@ -2456,17 +2919,52 @@ function updateProgramListHeader() {
 
   const applySummaryButtonStyles = (button, hasResults) => {
     if (!button) return;
-    const isActive = (button.id === "programListTodaySummaryBtn" && nadi4uListType === NADI4U_LIST_TYPE_DAY)
-      || (button.id === "programListMultiSummaryBtn" && nadi4uListType === NADI4U_LIST_TYPE_MULTI);
-    button.classList.remove("bg-white", "text-cyan-700", "border-cyan-200", "hover:bg-cyan-50", "bg-slate-100", "text-slate-400", "border-slate-200", "bg-[#2228a4]", "text-white", "border-[#2228a4]", "shadow-md", "shadow-sm", "translate-y-0", "-translate-y-px");
+    const isActive =
+      (button.id === "programListTodaySummaryBtn" &&
+        nadi4uListType === NADI4U_LIST_TYPE_DAY) ||
+      (button.id === "programListMultiSummaryBtn" &&
+        nadi4uListType === NADI4U_LIST_TYPE_MULTI);
+    button.classList.remove(
+      "bg-white",
+      "text-cyan-700",
+      "border-cyan-200",
+      "hover:bg-cyan-50",
+      "bg-slate-100",
+      "text-slate-400",
+      "border-slate-200",
+      "bg-[#2228a4]",
+      "text-white",
+      "border-[#2228a4]",
+      "shadow-md",
+      "shadow-sm",
+      "translate-y-0",
+      "-translate-y-px",
+    );
     if (hasResults && isActive) {
-      button.classList.add("bg-[#2228a4]", "text-white", "border-[#2228a4]", "shadow-sm", "-translate-y-px");
+      button.classList.add(
+        "bg-[#2228a4]",
+        "text-white",
+        "border-[#2228a4]",
+        "shadow-sm",
+        "-translate-y-px",
+      );
       button.disabled = false;
     } else if (hasResults) {
-      button.classList.add("bg-white", "text-slate-700", "border-slate-200", "hover:border-slate-300", "translate-y-0");
+      button.classList.add(
+        "bg-white",
+        "text-slate-700",
+        "border-slate-200",
+        "hover:border-slate-300",
+        "translate-y-0",
+      );
       button.disabled = false;
     } else {
-      button.classList.add("bg-slate-100", "text-slate-400", "border-slate-200", "translate-y-0");
+      button.classList.add(
+        "bg-slate-100",
+        "text-slate-400",
+        "border-slate-200",
+        "translate-y-0",
+      );
       button.disabled = true;
     }
   };
@@ -2480,17 +2978,37 @@ function updateProgramListHeader() {
     const count = Number(sectionedData.pillarCounts?.[config.key] || 0);
     const isActive = nadi4uPillarFilter === config.key;
     button.classList.remove(
-      "bg-yellow-400", "text-yellow-950", "border-yellow-400",
-      "bg-white", "text-yellow-700", "border-yellow-200", "hover:bg-yellow-50",
-      "bg-blue-500", "text-white", "border-blue-500",
-      "text-blue-700", "border-blue-200", "hover:bg-blue-50",
-      "bg-orange-500", "border-orange-500",
-      "text-orange-700", "border-orange-200", "hover:bg-orange-50",
-      "bg-violet-600", "border-violet-600",
-      "text-violet-700", "border-violet-200", "hover:bg-violet-50",
-      "bg-indigo-600", "border-indigo-600",
-      "text-indigo-700", "border-indigo-200", "hover:bg-indigo-50",
-      "bg-slate-100", "text-slate-400", "border-slate-200"
+      "bg-yellow-400",
+      "text-yellow-950",
+      "border-yellow-400",
+      "bg-white",
+      "text-yellow-700",
+      "border-yellow-200",
+      "hover:bg-yellow-50",
+      "bg-blue-500",
+      "text-white",
+      "border-blue-500",
+      "text-blue-700",
+      "border-blue-200",
+      "hover:bg-blue-50",
+      "bg-orange-500",
+      "border-orange-500",
+      "text-orange-700",
+      "border-orange-200",
+      "hover:bg-orange-50",
+      "bg-violet-600",
+      "border-violet-600",
+      "text-violet-700",
+      "border-violet-200",
+      "hover:bg-violet-50",
+      "bg-indigo-600",
+      "border-indigo-600",
+      "text-indigo-700",
+      "border-indigo-200",
+      "hover:bg-indigo-50",
+      "bg-slate-100",
+      "text-slate-400",
+      "border-slate-200",
     );
     button.textContent = `${button.dataset.baseLabel || button.textContent.split(" (")[0]}${count > 0 ? ` (${count})` : ""}`;
     if (!button.dataset.baseLabel) {
@@ -2506,7 +3024,9 @@ function updateProgramListHeader() {
 
     button.disabled = false;
     button.removeAttribute("aria-disabled");
-    button.classList.add(...(isActive ? config.active : config.idle).split(" "));
+    button.classList.add(
+      ...(isActive ? config.active : config.idle).split(" "),
+    );
   });
 
   requestAnimationFrame(syncNadi4uProgramListHeightToTotals);
@@ -2535,7 +3055,8 @@ function changeProgramListView(direction) {
 window.changeProgramListView = changeProgramListView;
 
 function scrollToProgramListSection(sectionKey) {
-  const targetId = sectionKey === "multi" ? "multiDayEventsSection" : "todayEventsSection";
+  const targetId =
+    sectionKey === "multi" ? "multiDayEventsSection" : "todayEventsSection";
   const target = document.getElementById(targetId);
   if (!target) return;
   target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2548,7 +3069,12 @@ function handleNadi4uHeroBackgroundClick(event) {
   const target = event?.target;
   if (!(target instanceof Element)) return;
   if (target.closest("#nadi4uPillarButtons")) return;
-  if (target.closest("#programListTodaySummaryBtn, #programListMultiSummaryBtn, #programListSearchBtn, #programListSortBtn, #programListSyncBtn")) return;
+  if (
+    target.closest(
+      "#programListTodaySummaryBtn, #programListMultiSummaryBtn, #programListSearchBtn, #programListSortBtn, #programListSyncBtn",
+    )
+  )
+    return;
   if (target.closest("button")) return;
   nadi4uPillarFilter = "";
   resetNadi4uSectionPages();
@@ -2558,9 +3084,10 @@ function handleNadi4uHeroBackgroundClick(event) {
 window.handleNadi4uHeroBackgroundClick = handleNadi4uHeroBackgroundClick;
 
 function setNadi4uListType(nextType) {
-  const normalizedType = nextType === NADI4U_LIST_TYPE_MULTI
-    ? NADI4U_LIST_TYPE_MULTI
-    : NADI4U_LIST_TYPE_DAY;
+  const normalizedType =
+    nextType === NADI4U_LIST_TYPE_MULTI
+      ? NADI4U_LIST_TYPE_MULTI
+      : NADI4U_LIST_TYPE_DAY;
   if (nadi4uListType === normalizedType) {
     updateProgramListHeader();
     return;
@@ -2575,16 +3102,27 @@ function setNadi4uListType(nextType) {
 window.setNadi4uListType = setNadi4uListType;
 
 function setNadi4uPillarFilter(nextPillar) {
-  const normalizedPillar = String(nextPillar || "").trim().toLowerCase();
-  nadi4uPillarFilter = nadi4uPillarFilter === normalizedPillar ? "" : normalizedPillar;
+  const normalizedPillar = String(nextPillar || "")
+    .trim()
+    .toLowerCase();
+  nadi4uPillarFilter =
+    nadi4uPillarFilter === normalizedPillar ? "" : normalizedPillar;
   const allEvents = getCombinedEventListSource();
   const sectionedData = getSectionedNadi4uDisplayData(allEvents);
   if (nadi4uPillarFilter) {
     const isOnTodayTab = nadi4uListType === NADI4U_LIST_TYPE_DAY;
     const isOnMultiTab = nadi4uListType === NADI4U_LIST_TYPE_MULTI;
-    if (isOnTodayTab && sectionedData.todayEvents.length === 0 && sectionedData.multiDayEvents.length > 0) {
+    if (
+      isOnTodayTab &&
+      sectionedData.todayEvents.length === 0 &&
+      sectionedData.multiDayEvents.length > 0
+    ) {
       nadi4uListType = NADI4U_LIST_TYPE_MULTI;
-    } else if (isOnMultiTab && sectionedData.multiDayEvents.length === 0 && sectionedData.todayEvents.length > 0) {
+    } else if (
+      isOnMultiTab &&
+      sectionedData.multiDayEvents.length === 0 &&
+      sectionedData.todayEvents.length > 0
+    ) {
       nadi4uListType = NADI4U_LIST_TYPE_DAY;
     }
   }
@@ -2632,15 +3170,26 @@ function applyNadi4uSearch() {
   renderEventList();
 }
 
-function handleNadi4uSubcategoryFilterClick(subcategoryLabel, sourceSection = "monthly") {
+function handleNadi4uSubcategoryFilterClick(
+  subcategoryLabel,
+  sourceSection = "monthly",
+) {
   const label = String(subcategoryLabel || "").trim();
   if (!label) return;
-  const source = String(sourceSection || "monthly").trim().toLowerCase() || "monthly";
+  const source =
+    String(sourceSection || "monthly")
+      .trim()
+      .toLowerCase() || "monthly";
 
   const normalizedLabel = normalizeNadi4uSubcategoryFilterValue(label);
-  const normalizedCurrent = normalizeNadi4uSubcategoryFilterValue(nadi4uSubcategoryFilter);
-  const normalizedCurrentSource = String(nadi4uSubcategoryFilterSource || "").trim().toLowerCase();
-  const isSameSelection = normalizedLabel === normalizedCurrent && source === normalizedCurrentSource;
+  const normalizedCurrent = normalizeNadi4uSubcategoryFilterValue(
+    nadi4uSubcategoryFilter,
+  );
+  const normalizedCurrentSource = String(nadi4uSubcategoryFilterSource || "")
+    .trim()
+    .toLowerCase();
+  const isSameSelection =
+    normalizedLabel === normalizedCurrent && source === normalizedCurrentSource;
 
   nadi4uSubcategoryFilter = isSameSelection ? "" : label;
   nadi4uSubcategoryFilterSource = isSameSelection ? "" : source;
@@ -2686,11 +3235,19 @@ function getFilteredEventList(sourceEvents) {
   if (!Array.isArray(sourceEvents)) return [];
 
   if (window.selectedFilterDate) {
-    return sourceEvents.filter((eventItem) => window.selectedFilterDate >= eventItem.start && window.selectedFilterDate <= eventItem.end);
+    return sourceEvents.filter(
+      (eventItem) =>
+        window.selectedFilterDate >= eventItem.start &&
+        window.selectedFilterDate <= eventItem.end,
+    );
   }
 
   if (rangeFilter.start && rangeFilter.end) {
-    return sourceEvents.filter((eventItem) => eventItem.start <= rangeFilter.end && eventItem.end >= rangeFilter.start);
+    return sourceEvents.filter(
+      (eventItem) =>
+        eventItem.start <= rangeFilter.end &&
+        eventItem.end >= rangeFilter.start,
+    );
   }
 
   const todayStr = toLocalISOString(today);
@@ -2702,155 +3259,195 @@ function getFilteredEventList(sourceEvents) {
 // =====================================================
 
 async function saveBasicConfig() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 1,
-    settings: {
-      title: siteSettings.title,
-      subtitle: siteSettings.subtitle,
-      calendarFilters: siteSettings.calendarFilters
-    }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 1,
+      settings: {
+        title: siteSettings.title,
+        subtitle: siteSettings.subtitle,
+        calendarFilters: siteSettings.calendarFilters,
+      },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save basic config (ID 1):', error);
+    console.error("❌ Failed to save basic config (ID 1):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved basic config to ID 1');
+  if (window.DEBUG_MODE) console.log("✅ Saved basic config to ID 1");
 }
 
 async function saveManagerOffdays() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 10,
-    settings: { managerOffdays: siteSettings.managerOffdays }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 10,
+      settings: { managerOffdays: siteSettings.managerOffdays },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save manager offdays (ID 10):', error);
+    console.error("❌ Failed to save manager offdays (ID 10):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved manager offdays to ID 10');
-  
+  if (window.DEBUG_MODE) console.log("✅ Saved manager offdays to ID 10");
+
   await updateFullBackup();
 }
 
 async function saveAssistantManagerOffdays() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 11,
-    settings: { assistantManagerOffdays: siteSettings.assistantManagerOffdays }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 11,
+      settings: {
+        assistantManagerOffdays: siteSettings.assistantManagerOffdays,
+      },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save assistant manager offdays (ID 11):', error);
+    console.error(
+      "❌ Failed to save assistant manager offdays (ID 11):",
+      error,
+    );
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved assistant manager offdays to ID 11');
-  
+  if (window.DEBUG_MODE)
+    console.log("✅ Saved assistant manager offdays to ID 11");
+
   await updateFullBackup();
 }
 
 async function saveManagerReplacements() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 12,
-    settings: { managerReplacements: siteSettings.managerReplacements }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 12,
+      settings: { managerReplacements: siteSettings.managerReplacements },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save manager replacements (ID 12):', error);
+    console.error("❌ Failed to save manager replacements (ID 12):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved manager replacements to ID 12');
-  
+  if (window.DEBUG_MODE) console.log("✅ Saved manager replacements to ID 12");
+
   await updateFullBackup();
 }
 
 async function saveAssistantManagerReplacements() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 13,
-    settings: { assistantManagerReplacements: siteSettings.assistantManagerReplacements }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 13,
+      settings: {
+        assistantManagerReplacements: siteSettings.assistantManagerReplacements,
+      },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save assistant manager replacements (ID 13):', error);
+    console.error(
+      "❌ Failed to save assistant manager replacements (ID 13):",
+      error,
+    );
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved assistant manager replacements to ID 13');
-  
+  if (window.DEBUG_MODE)
+    console.log("✅ Saved assistant manager replacements to ID 13");
+
   await updateFullBackup();
 }
 
 async function savePublicHolidays() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 20,
-    settings: { publicHolidays: siteSettings.publicHolidays }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 20,
+      settings: { publicHolidays: siteSettings.publicHolidays },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save public holidays (ID 20):', error);
+    console.error("❌ Failed to save public holidays (ID 20):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved public holidays to ID 20');
-  
+  if (window.DEBUG_MODE) console.log("✅ Saved public holidays to ID 20");
+
   await updateFullBackup();
-  
+
   // Dispatch event to notify other components (e.g., leave calendar)
-  document.dispatchEvent(new CustomEvent('holidaysUpdated'));
+  document.dispatchEvent(new CustomEvent("holidaysUpdated"));
 }
 
 async function saveSchoolHolidays() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 21,
-    settings: { schoolHolidays: siteSettings.schoolHolidays }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 21,
+      settings: { schoolHolidays: siteSettings.schoolHolidays },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save school holidays (ID 21):', error);
+    console.error("❌ Failed to save school holidays (ID 21):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved school holidays to ID 21');
-  
+  if (window.DEBUG_MODE) console.log("✅ Saved school holidays to ID 21");
+
   await updateFullBackup();
-  
+
   // Dispatch event to notify other components (e.g., leave calendar)
-  document.dispatchEvent(new CustomEvent('holidaysUpdated'));
+  document.dispatchEvent(new CustomEvent("holidaysUpdated"));
 }
 
 async function saveCustomSections() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 30,
-    settings: { sections: siteSettings.sections }
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 30,
+      settings: { sections: siteSettings.sections },
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save custom sections (ID 30):', error);
+    console.error("❌ Failed to save custom sections (ID 30):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved custom sections to ID 30');
-  
+  if (window.DEBUG_MODE) console.log("✅ Saved custom sections to ID 30");
+
   await updateFullBackup();
 }
 
 async function updateFullBackup() {
-  const { error } = await supabaseClient.from('site_settings').upsert({
-    id: 99,
-    settings: siteSettings
-  }, { onConflict: 'id' });
-  
+  const { error } = await supabaseClient.from("site_settings").upsert(
+    {
+      id: 99,
+      settings: siteSettings,
+    },
+    { onConflict: "id" },
+  );
+
   if (error) {
-    console.error('❌ Failed to save backup (ID 99):', error);
+    console.error("❌ Failed to save backup (ID 99):", error);
     throw error;
   }
-  if (window.DEBUG_MODE) console.log('✅ Saved backup to ID 99');
+  if (window.DEBUG_MODE) console.log("✅ Saved backup to ID 99");
 }
 
 // Fallback: Save all non-event settings at once
 async function saveAllSettings() {
   if (!isDataLoaded) {
-    if (window.DEBUG_MODE) console.warn("saveAllSettings called but data not loaded yet");
+    if (window.DEBUG_MODE)
+      console.warn("saveAllSettings called but data not loaded yet");
     return Promise.reject(new Error("Data not loaded yet"));
   }
 
   if (window.DEBUG_MODE) console.log("💾 Saving settings to Supabase...");
-  
+
   try {
     // Save all settings using specialized functions
     await saveBasicConfig();
@@ -2867,7 +3464,9 @@ async function saveAllSettings() {
     return true;
   } catch (err) {
     console.error("❌ Failed to save to Supabase:", err.message);
-    alert("Unable to save changes. Please check your connection and try again.");
+    alert(
+      "Unable to save changes. Please check your connection and try again.",
+    );
     throw err;
   }
 }
@@ -2883,7 +3482,8 @@ async function refreshEventsFromSupabase() {
       : await loadEventsForMonth(currentYear, currentMonth, true);
 
     events = newEvents;
-    if (window.DEBUG_MODE) console.log("✓ Refreshed events from Supabase:", events.length, "events");
+    if (window.DEBUG_MODE)
+      console.log("✓ Refreshed events from Supabase:", events.length, "events");
     renderCalendar();
     renderEventList();
     return events;
@@ -2895,27 +3495,27 @@ async function refreshEventsFromSupabase() {
 
 async function loadFromSupabase() {
   if (window.DEBUG_MODE) console.log("🔄 Loading data from Supabase...");
-  
+
   try {
     // OPTIMIZATION: Batch load all site_settings in ONE query (was 7 queries)
     const { data: allSettings, error: settingsError } = await supabaseClient
-      .from('site_settings')
-      .select('id, settings')
-      .in('id', [1, 10, 11, 12, 13, 20, 21, 30]);
+      .from("site_settings")
+      .select("id, settings")
+      .in("id", [1, 10, 11, 12, 13, 20, 21, 30]);
 
     if (settingsError) throw settingsError;
 
     // Map results by ID for easy access
     const settingsMap = {};
-    (allSettings || []).forEach(item => {
+    (allSettings || []).forEach((item) => {
       settingsMap[item.id] = item.settings;
     });
 
     // Build siteSettings object from batched results
     siteSettings = {
       // ID 1: Basic config
-      title: 'NADI',
-      subtitle: '',
+      title: "NADI",
+      subtitle: "",
       calendarFilters: settingsMap[1]?.calendarFilters || {
         showCategories: true,
         showHolidays: true,
@@ -2929,21 +3529,24 @@ async function loadFromSupabase() {
       // ID 12: Manager replacements
       managerReplacements: settingsMap[12]?.managerReplacements || [],
       // ID 13: Assistant Manager replacements
-      assistantManagerReplacements: settingsMap[13]?.assistantManagerReplacements || [],
+      assistantManagerReplacements:
+        settingsMap[13]?.assistantManagerReplacements || [],
       // ID 20: Public holidays
       publicHolidays: settingsMap[20]?.publicHolidays || {},
       // ID 21: School holidays
       schoolHolidays: settingsMap[21]?.schoolHolidays || {},
       // ID 30: Custom sections
-      sections: settingsMap[30]?.sections || []
+      sections: settingsMap[30]?.sections || [],
     };
 
-    if (window.DEBUG_MODE) console.log('✅ Loaded all settings in 1 batched query (was 7)');
+    if (window.DEBUG_MODE)
+      console.log("✅ Loaded all settings in 1 batched query (was 7)");
 
-// =====================================================
+    // =====================================================
     // OPTIMIZATION: Load events for CURRENT MONTH only (with caching)
     // =====================================================
-    if (window.DEBUG_MODE) console.log("📥 Loading events for current month (with cache)...");
+    if (window.DEBUG_MODE)
+      console.log("📥 Loading events for current month (with cache)...");
 
     // Load events and assign to global events variable
     showAllSkeletons();
@@ -2958,10 +3561,10 @@ async function loadFromSupabase() {
     // OPTIMIZATION: Load only latest announcement meta (for red dot)
     // =====================================================
     loadLatestAnnouncementMeta();
-    
+
     // Update backup with loaded data
     await backupSiteSettings();
-    
+
     // Render UI
     updateUIFromSettings();
     loadCalendarFilters();
@@ -2973,11 +3576,10 @@ async function loadFromSupabase() {
     // Mark data as loaded
     isDataLoaded = true;
     supabaseLoaded = true;
-    
   } catch (error) {
     console.error("❌ Error loading data:", error.message);
     alert("Unable to load data. Please refresh the page to try again.");
-    
+
     // Render with defaults
     events = [];
     updateUIFromSettings();
@@ -2985,7 +3587,7 @@ async function loadFromSupabase() {
     renderCustomLinks();
     renderCalendar();
     renderEventList();
-    
+
     isDataLoaded = true;
     supabaseLoaded = true;
   }
@@ -3028,7 +3630,10 @@ function initGlowCards() {
 
 function checkNewAnnouncements() {
   const lastReadAnnouncement = appStorage.getItem("lastReadAnnouncementId");
-  const latestId = latestAnnouncementMeta?.id != null ? String(latestAnnouncementMeta.id) : null;
+  const latestId =
+    latestAnnouncementMeta?.id != null
+      ? String(latestAnnouncementMeta.id)
+      : null;
   const dot = document.getElementById("newAnnouncementDot");
   if (dot) {
     if (latestId && lastReadAnnouncement !== latestId) {
@@ -3040,7 +3645,10 @@ function checkNewAnnouncements() {
 }
 
 function markAnnouncementsAsRead() {
-  const latestId = latestAnnouncementMeta?.id != null ? String(latestAnnouncementMeta.id) : null;
+  const latestId =
+    latestAnnouncementMeta?.id != null
+      ? String(latestAnnouncementMeta.id)
+      : null;
   if (!latestId) return;
   appStorage.setItem("lastReadAnnouncementId", latestId);
   const dot = document.getElementById("newAnnouncementDot");
@@ -3050,21 +3658,25 @@ function markAnnouncementsAsRead() {
 async function loadLatestAnnouncementMeta() {
   try {
     const { data, error } = await supabaseClient
-      .from('announcements')
+      .from("announcements")
       .select(LATEST_ANNOUNCEMENT_SELECT_COLUMNS)
-      .order('created_at', { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1);
-    
+
     if (error) throw error;
-    latestAnnouncementMeta = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    latestAnnouncementMeta =
+      Array.isArray(data) && data.length > 0 ? data[0] : null;
     if (window.DEBUG_MODE) {
-      console.log("✅ Loaded latest announcement meta:", latestAnnouncementMeta?.id || "none");
+      console.log(
+        "✅ Loaded latest announcement meta:",
+        latestAnnouncementMeta?.id || "none",
+      );
     }
   } catch (error) {
     console.error("Error loading latest announcement:", error);
     latestAnnouncementMeta = null;
   }
-  
+
   checkNewAnnouncements();
 }
 
@@ -3073,7 +3685,11 @@ async function loadLatestAnnouncementMeta() {
   const dateHeader = document.getElementById("current-date-header");
   if (dateHeader) {
     const dayName = today.toLocaleDateString("en-MY", { weekday: "long" });
-    const dateFull = today.toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+    const dateFull = today.toLocaleDateString("en-MY", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
     dateHeader.innerHTML = `
       <span class="text-[9px] font-bold text-white/70 uppercase tracking-wide leading-none mb-0.5">${dayName}</span>
       <span class="text-xs font-bold text-white leading-none">${dateFull}</span>
@@ -3084,35 +3700,35 @@ async function loadLatestAnnouncementMeta() {
   const endHourSelect = document.getElementById("endTimeHour");
   const time2HourSelect = document.getElementById("time2Hour");
   const endTime2HourSelect = document.getElementById("endTime2Hour");
-    for (let i = 1; i <= 12; i++) {
-      const val = i.toString().padStart(2, "0");
-      const opt = document.createElement("option");
-      opt.value = val;
-      opt.text = val;
-      if (val === "09") opt.selected = true;
-      hourSelect.appendChild(opt);
-      const opt2 = document.createElement("option");
-      opt2.value = val;
-      opt2.text = val;
-      if (val === "06") opt2.selected = true;
-      endHourSelect.appendChild(opt2);
-      const opt3 = document.createElement("option");
-      opt3.value = val;
-      opt3.text = val;
-      time2HourSelect.appendChild(opt3);
-      const opt4 = document.createElement("option");
-      opt4.value = val;
-      opt4.text = val;
-      endTime2HourSelect.appendChild(opt4);
-    }
+  for (let i = 1; i <= 12; i++) {
+    const val = i.toString().padStart(2, "0");
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.text = val;
+    if (val === "09") opt.selected = true;
+    hourSelect.appendChild(opt);
+    const opt2 = document.createElement("option");
+    opt2.value = val;
+    opt2.text = val;
+    if (val === "06") opt2.selected = true;
+    endHourSelect.appendChild(opt2);
+    const opt3 = document.createElement("option");
+    opt3.value = val;
+    opt3.text = val;
+    time2HourSelect.appendChild(opt3);
+    const opt4 = document.createElement("option");
+    opt4.value = val;
+    opt4.text = val;
+    endTime2HourSelect.appendChild(opt4);
+  }
 
-    loadFromSupabase()
-      .then(() => {
-        if (window.DEBUG_MODE) console.log("✓ All data loaded successfully");
-      })
-      .catch((error) => {
-        console.error("✗ Failed to load data:", error);
-      });
+  loadFromSupabase()
+    .then(() => {
+      if (window.DEBUG_MODE) console.log("✓ All data loaded successfully");
+    })
+    .catch((error) => {
+      console.error("✗ Failed to load data:", error);
+    });
 
   // prevMonth/nextMonth are for main calendar (now hidden) - mini calendar uses its own nav
   document.getElementById("prevMonth")?.addEventListener("click", async () => {
@@ -3123,8 +3739,11 @@ async function loadLatestAnnouncementMeta() {
     }
 
     await clearRangeFilter(false);
-    window.selectedFilterDate = getAutoSelectedDateForMonth(currentYear, currentMonth);
-    
+    window.selectedFilterDate = getAutoSelectedDateForMonth(
+      currentYear,
+      currentMonth,
+    );
+
     // Load events for the new month
     showCalendarSkeleton();
     const monthEvents = await loadEventsForMonth(currentYear, currentMonth);
@@ -3144,7 +3763,10 @@ async function loadLatestAnnouncementMeta() {
     }
 
     await clearRangeFilter(false);
-    window.selectedFilterDate = getAutoSelectedDateForMonth(currentYear, currentMonth);
+    window.selectedFilterDate = getAutoSelectedDateForMonth(
+      currentYear,
+      currentMonth,
+    );
 
     // Load events for the new month
     showCalendarSkeleton();
@@ -3157,7 +3779,9 @@ async function loadLatestAnnouncementMeta() {
     renderEventList();
   });
 
-  document.getElementById("modalBackdrop").addEventListener("click", closeModal);
+  document
+    .getElementById("modalBackdrop")
+    .addEventListener("click", closeModal);
 
   let headerClicks = 0;
   let headerTimer;
@@ -3198,7 +3822,9 @@ async function loadLatestAnnouncementMeta() {
     });
   });
 
-  document.getElementById("announcementBtn").addEventListener("click", markAnnouncementsAsRead);
+  document
+    .getElementById("announcementBtn")
+    .addEventListener("click", markAnnouncementsAsRead);
 
   const programsListHeader = document.getElementById("programsListHeader");
   if (programsListHeader) {
@@ -3213,7 +3839,11 @@ async function loadLatestAnnouncementMeta() {
       }
     });
   }
-  window.addEventListener("resize", () => requestAnimationFrame(syncNadi4uProgramListHeightToTotals), { passive: true });
+  window.addEventListener(
+    "resize",
+    () => requestAnimationFrame(syncNadi4uProgramListHeightToTotals),
+    { passive: true },
+  );
   updateProgramListHeader();
 })();
 
@@ -3252,11 +3882,11 @@ function showView(viewId) {
 
 function openSettings() {
   // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => openSettings());
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => openSettings());
     return;
   }
-  
+
   const settingsModal = document.getElementById("settingsModal");
   if (!settingsModal) {
     console.error("settingsModal element not found!");
@@ -3285,11 +3915,13 @@ function saveHeaderSettings() {
   siteSettings.title = document.getElementById("settingSiteTitle").value;
   siteSettings.subtitle = document.getElementById("settingSiteSubtitle").value;
   updateUIFromSettings();
-  saveBasicConfig().then(() => {
-    backToMenu();
-  }).catch(err => {
-    alert("Failed to save header settings. Please try again.");
-  });
+  saveBasicConfig()
+    .then(() => {
+      backToMenu();
+    })
+    .catch((err) => {
+      alert("Failed to save header settings. Please try again.");
+    });
 }
 
 function openOffdaySettings() {
@@ -3315,30 +3947,57 @@ function changeOffdayMonth(delta) {
 }
 
 function renderOffdayCalendars() {
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  document.getElementById("offdayMonthLabel").textContent = `${monthNames[offdayCalendarMonth]} ${offdayCalendarYear}`;
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  document.getElementById("offdayMonthLabel").textContent =
+    `${monthNames[offdayCalendarMonth]} ${offdayCalendarYear}`;
 
-  const daysInMonth = new Date(offdayCalendarYear, offdayCalendarMonth + 1, 0).getDate();
-  const firstDay = new Date(offdayCalendarYear, offdayCalendarMonth, 1).getDay();
+  const daysInMonth = new Date(
+    offdayCalendarYear,
+    offdayCalendarMonth + 1,
+    0,
+  ).getDate();
+  const firstDay = new Date(
+    offdayCalendarYear,
+    offdayCalendarMonth,
+    1,
+  ).getDay();
 
   const mOffdays = siteSettings.managerOffdays || [];
   const amOffdays = siteSettings.assistantManagerOffdays || [];
   const mReplacements = siteSettings.managerReplacements || [];
   const amReplacements = siteSettings.assistantManagerReplacements || [];
 
-  document.getElementById("managerOffdayCount").textContent = `${mOffdays.length} dates`;
-  document.getElementById("amOffdayCount").textContent = `${amOffdays.length} dates`;
-  document.getElementById("managerReplacementCount").textContent = `${mReplacements.length} dates`;
-  document.getElementById("amReplacementCount").textContent = `${amReplacements.length} dates`;
+  document.getElementById("managerOffdayCount").textContent =
+    `${mOffdays.length} dates`;
+  document.getElementById("amOffdayCount").textContent =
+    `${amOffdays.length} dates`;
+  document.getElementById("managerReplacementCount").textContent =
+    `${mReplacements.length} dates`;
+  document.getElementById("amReplacementCount").textContent =
+    `${amReplacements.length} dates`;
 
   const renderCalendar = (containerId, type, array, color) => {
     const container = document.getElementById(containerId);
     container.innerHTML = "";
 
     const dayHeaders = ["S", "M", "T", "W", "T", "F", "S"];
-    dayHeaders.forEach(day => {
+    dayHeaders.forEach((day) => {
       const dayHeader = document.createElement("div");
-      dayHeader.className = "text-[8px] font-bold text-slate-400 uppercase py-1";
+      dayHeader.className =
+        "text-[8px] font-bold text-slate-400 uppercase py-1";
       dayHeader.textContent = day;
       container.appendChild(dayHeader);
     });
@@ -3356,7 +4015,8 @@ function renderOffdayCalendars() {
 
       const cell = document.createElement("button");
       cell.type = "button";
-      cell.className = "h-7 rounded text-[10px] font-medium transition-colors relative hover:bg-slate-100 text-slate-700";
+      cell.className =
+        "h-7 rounded text-[10px] font-medium transition-colors relative hover:bg-slate-100 text-slate-700";
       cell.textContent = day;
 
       if (isSelected) {
@@ -3387,10 +4047,25 @@ function renderOffdayCalendars() {
     }
   };
 
-  renderCalendar("offdayManagerCalendar", "manager-offday", mOffdays, "#00aff0");
+  renderCalendar(
+    "offdayManagerCalendar",
+    "manager-offday",
+    mOffdays,
+    "#00aff0",
+  );
   renderCalendar("offdayAMCalendar", "am-offday", amOffdays, "#90cf53");
-  renderCalendar("offdayManagerReplacementCalendar", "manager-replacement", mReplacements, "#00aff0");
-  renderCalendar("offdayAMReplacementCalendar", "am-replacement", amReplacements, "#90cf53");
+  renderCalendar(
+    "offdayManagerReplacementCalendar",
+    "manager-replacement",
+    mReplacements,
+    "#00aff0",
+  );
+  renderCalendar(
+    "offdayAMReplacementCalendar",
+    "am-replacement",
+    amReplacements,
+    "#90cf53",
+  );
 }
 
 function toggleOffdayDate(type, dateStr) {
@@ -3403,13 +4078,13 @@ function toggleOffdayDate(type, dateStr) {
     const arr = siteSettings.managerOffdays;
     const index = arr.indexOf(dateStr);
     const nextIndex = arr.indexOf(nextDateStr);
-    
+
     if (index > -1) {
       arr.splice(index, 1);
     } else {
       arr.push(dateStr);
     }
-    
+
     if (nextIndex > -1) {
       arr.splice(nextIndex, 1);
     } else if (index === -1) {
@@ -3419,13 +4094,13 @@ function toggleOffdayDate(type, dateStr) {
     const arr = siteSettings.assistantManagerOffdays;
     const index = arr.indexOf(dateStr);
     const nextIndex = arr.indexOf(nextDateStr);
-    
+
     if (index > -1) {
       arr.splice(index, 1);
     } else {
       arr.push(dateStr);
     }
-    
+
     if (nextIndex > -1) {
       arr.splice(nextIndex, 1);
     } else if (index === -1) {
@@ -3465,7 +4140,8 @@ function renderOffdayLists() {
 
   mOffdays.sort().forEach((date, idx) => {
     const div = document.createElement("div");
-    div.className = "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
+    div.className =
+      "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
     div.innerHTML = `
       <span class="text-[10px] font-semibold text-slate-600">${formatDate(date)}</span>
       <button onclick="removeOffday('manager', ${idx})" class="text-red-400 hover:text-red-600 transition-colors">
@@ -3483,7 +4159,8 @@ function renderOffdayLists() {
 
   amOffdays.sort().forEach((date, idx) => {
     const div = document.createElement("div");
-    div.className = "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
+    div.className =
+      "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
     div.innerHTML = `
       <span class="text-[10px] font-semibold text-slate-600">${formatDate(date)}</span>
       <button onclick="removeOffday('am', ${idx})" class="text-red-400 hover:text-red-600 transition-colors">
@@ -3539,14 +4216,22 @@ function addOffdayRange(type) {
     return;
   }
 
-  const dates = type === "manager" ? siteSettings.managerOffdays : siteSettings.assistantManagerOffdays;
+  const dates =
+    type === "manager"
+      ? siteSettings.managerOffdays
+      : siteSettings.assistantManagerOffdays;
   if (!dates) {
-    siteSettings[type === "manager" ? "managerOffdays" : "assistantManagerOffdays"] = [];
+    siteSettings[
+      type === "manager" ? "managerOffdays" : "assistantManagerOffdays"
+    ] = [];
   }
 
   while (current <= last) {
     const dateStr = toLocalISOString(current);
-    const arr = type === "manager" ? siteSettings.managerOffdays : siteSettings.assistantManagerOffdays;
+    const arr =
+      type === "manager"
+        ? siteSettings.managerOffdays
+        : siteSettings.assistantManagerOffdays;
     if (!arr.includes(dateStr)) {
       arr.push(dateStr);
     }
@@ -3569,8 +4254,12 @@ function removeOffday(type, idx) {
 }
 
 function renderReplacementLists() {
-  const managerReplacementList = document.getElementById("managerReplacementList");
-  const managerReplacementCount = document.getElementById("managerReplacementCount");
+  const managerReplacementList = document.getElementById(
+    "managerReplacementList",
+  );
+  const managerReplacementCount = document.getElementById(
+    "managerReplacementCount",
+  );
   if (managerReplacementList && managerReplacementCount) {
     managerReplacementList.innerHTML = "";
     const mReplacement = siteSettings.managerReplacements || [];
@@ -3578,7 +4267,8 @@ function renderReplacementLists() {
 
     mReplacement.sort().forEach((date) => {
       const div = document.createElement("div");
-      div.className = "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
+      div.className =
+        "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
       div.innerHTML = `
         <span class="text-[10px] font-semibold text-slate-600">${formatDate(date)}</span>
         <button onclick="removeReplacementDate('manager', '${date}')" class="text-red-400 hover:text-red-600 transition-colors">
@@ -3598,7 +4288,8 @@ function renderReplacementLists() {
 
     amReplacement.sort().forEach((date) => {
       const div = document.createElement("div");
-      div.className = "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
+      div.className =
+        "flex items-center justify-between bg-slate-50 px-2 py-1 rounded border border-slate-200";
       div.innerHTML = `
         <span class="text-[10px] font-semibold text-slate-600">${formatDate(date)}</span>
         <button onclick="removeReplacementDate('am', '${date}')" class="text-red-400 hover:text-red-600 transition-colors">
@@ -3611,7 +4302,8 @@ function renderReplacementLists() {
 }
 
 function addReplacementDate(type) {
-  const startId = type === "manager" ? "managerReplacementStart" : "amReplacementStart";
+  const startId =
+    type === "manager" ? "managerReplacementStart" : "amReplacementStart";
   const startDate = document.getElementById(startId).value;
 
   if (!startDate) {
@@ -3620,12 +4312,14 @@ function addReplacementDate(type) {
   }
 
   if (type === "manager") {
-    if (!siteSettings.managerReplacements) siteSettings.managerReplacements = [];
+    if (!siteSettings.managerReplacements)
+      siteSettings.managerReplacements = [];
     if (!siteSettings.managerReplacements.includes(startDate)) {
       siteSettings.managerReplacements.push(startDate);
     }
   } else {
-    if (!siteSettings.assistantManagerReplacements) siteSettings.assistantManagerReplacements = [];
+    if (!siteSettings.assistantManagerReplacements)
+      siteSettings.assistantManagerReplacements = [];
     if (!siteSettings.assistantManagerReplacements.includes(startDate)) {
       siteSettings.assistantManagerReplacements.push(startDate);
     }
@@ -3638,9 +4332,12 @@ function addReplacementDate(type) {
 
 function removeReplacementDate(type, dateStr) {
   if (type === "manager") {
-    siteSettings.managerReplacements = siteSettings.managerReplacements.filter((d) => d !== dateStr);
+    siteSettings.managerReplacements = siteSettings.managerReplacements.filter(
+      (d) => d !== dateStr,
+    );
   } else {
-    siteSettings.assistantManagerReplacements = siteSettings.assistantManagerReplacements.filter((d) => d !== dateStr);
+    siteSettings.assistantManagerReplacements =
+      siteSettings.assistantManagerReplacements.filter((d) => d !== dateStr);
   }
   renderReplacementLists();
 }
@@ -3654,9 +4351,9 @@ function saveOffdaySettings() {
       backToMenu();
       renderCalendar();
       // Notify leave management system that offdays were updated
-      document.dispatchEvent(new CustomEvent('offdaysUpdated'));
+      document.dispatchEvent(new CustomEvent("offdaysUpdated"));
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("Failed to save offday settings:", err);
       alert("Failed to save offday settings. Please try again.");
     });
@@ -3708,7 +4405,8 @@ function openSectionEditor(idx = -1) {
         const colContainer = document.getElementById(`col-${btn.col}-buttons`);
         if (colContainer) {
           const btnDiv = document.createElement("div");
-          btnDiv.className = "bg-white border border-slate-200 rounded p-2 space-y-1";
+          btnDiv.className =
+            "bg-white border border-slate-200 rounded p-2 space-y-1";
           btnDiv.innerHTML = `
             <input type="text" placeholder="Label" value="${btn.label}" class="btn-label w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px]" data-col="${btn.col}">
             <input type="text" placeholder="URL" value="${btn.url}" class="btn-url w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px]" data-col="${btn.col}">
@@ -3721,7 +4419,9 @@ function openSectionEditor(idx = -1) {
 
     if (sec.columnHeaders) {
       sec.columnHeaders.forEach((header, i) => {
-        const input = document.querySelector(`.col-header[data-col="${i + 1}"]`);
+        const input = document.querySelector(
+          `.col-header[data-col="${i + 1}"]`,
+        );
         if (input) input.value = header;
       });
     }
@@ -3734,7 +4434,8 @@ function renderColumnEditors() {
   const cols = parseInt(document.getElementById("editSectionCols").value);
   const container = document.getElementById("columnEditorsContainer");
   container.innerHTML = "";
-  container.style.gridTemplateColumns = cols === 1 ? "1fr" : `repeat(${cols}, minmax(0, 1fr))`;
+  container.style.gridTemplateColumns =
+    cols === 1 ? "1fr" : `repeat(${cols}, minmax(0, 1fr))`;
 
   for (let c = 1; c <= cols; c++) {
     const colDiv = document.createElement("div");
@@ -3787,7 +4488,9 @@ function saveSectionLocal() {
 
   const buttons = [];
   for (let c = 1; c <= cols; c++) {
-    const colButtons = document.querySelectorAll(`#col-${c}-buttons .btn-label`);
+    const colButtons = document.querySelectorAll(
+      `#col-${c}-buttons .btn-label`,
+    );
     let rowIndex = 1;
     colButtons.forEach((labelInput) => {
       const urlInput = labelInput.nextElementSibling;
@@ -3819,9 +4522,12 @@ function saveSectionLocal() {
   }
 
   // Show saving indicator
-  const saveBtn = document.querySelector('#sectionEditorView button[onclick="saveSectionLocal()"]');
+  const saveBtn = document.querySelector(
+    '#sectionEditorView button[onclick="saveSectionLocal()"]',
+  );
   const originalText = saveBtn.innerHTML;
-  saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+  saveBtn.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
   saveBtn.disabled = true;
 
   // Save to Supabase with verification
@@ -3829,16 +4535,19 @@ function saveSectionLocal() {
     .then(async () => {
       // Verify by reading back from ID 30
       const { data: settingsData, error } = await supabaseClient
-        .from('site_settings')
-        .select('settings')
-        .eq('id', 30)
+        .from("site_settings")
+        .select("settings")
+        .eq("id", 30)
         .single();
 
       if (error) throw error;
 
       const savedSections = settingsData?.settings?.sections;
 
-      if (savedSections && savedSections.length === siteSettings.sections.length) {
+      if (
+        savedSections &&
+        savedSections.length === siteSettings.sections.length
+      ) {
         renderCustomLinks();
         updateSectionCountBadge();
         openSectionList();
@@ -3847,7 +4556,7 @@ function saveSectionLocal() {
         throw new Error("Verification failed: Section count mismatch");
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("✗ Failed to save sections:", err);
       saveBtn.innerHTML = originalText;
       saveBtn.disabled = false;
@@ -3856,16 +4565,18 @@ function saveSectionLocal() {
 }
 
 function showSectionSaveSuccess() {
-  const saveBtn = document.querySelector('#sectionEditorView button[onclick="saveSectionLocal()"]');
+  const saveBtn = document.querySelector(
+    '#sectionEditorView button[onclick="saveSectionLocal()"]',
+  );
   const originalText = saveBtn.innerHTML;
   saveBtn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Saved!';
-  saveBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700');
-  saveBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+  saveBtn.classList.remove("bg-slate-800", "hover:bg-slate-700");
+  saveBtn.classList.add("bg-green-600", "hover:bg-green-700");
 
   setTimeout(() => {
     saveBtn.innerHTML = originalText;
-    saveBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-    saveBtn.classList.add('bg-slate-800', 'hover:bg-slate-700');
+    saveBtn.classList.remove("bg-green-600", "hover:bg-green-700");
+    saveBtn.classList.add("bg-slate-800", "hover:bg-slate-700");
   }, 2000);
 }
 
@@ -3881,10 +4592,14 @@ function renderSettingsSectionList() {
 
   siteSettings.sections.forEach((sec, idx) => {
     const div = document.createElement("div");
-    div.className = "flex justify-between items-center p-3 bg-white border-2 border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all";
+    div.className =
+      "flex justify-between items-center p-3 bg-white border-2 border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all";
 
     let typeLabel = sec.type === "divider" ? "Divider" : "Button Section";
-    let detailsText = sec.type === "divider" ? "Horizontal line" : `${sec.cols || 2} Cols × ${sec.buttons ? sec.buttons.length : 0} Buttons`;
+    let detailsText =
+      sec.type === "divider"
+        ? "Horizontal line"
+        : `${sec.cols || 2} Cols × ${sec.buttons ? sec.buttons.length : 0} Buttons`;
 
     div.innerHTML = `
       <div class="flex items-center gap-3">
@@ -3915,7 +4630,8 @@ function deleteSection() {
   const panel = document.getElementById("deleteModalPanel");
 
   document.querySelector("#deleteModal h3").textContent = "Delete Section?";
-  document.querySelector("#deleteModal p").textContent = "All buttons in this section will be removed.";
+  document.querySelector("#deleteModal p").textContent =
+    "All buttons in this section will be removed.";
 
   modal.classList.remove("hidden");
 
@@ -3928,21 +4644,32 @@ function deleteSection() {
 async function verifySectionsInSupabase() {
   try {
     const { data: settingsData, error } = await supabaseClient
-      .from('site_settings')
-      .select('settings')
-      .eq('id', 1)
+      .from("site_settings")
+      .select("settings")
+      .eq("id", 1)
       .single();
 
     if (error) throw error;
 
     const sections = settingsData?.settings?.sections;
     if (sections && sections.length > 0) {
-      if (window.DEBUG_MODE) console.log("✓ Supabase verification:", sections.length, "sections stored");
+      if (window.DEBUG_MODE)
+        console.log(
+          "✓ Supabase verification:",
+          sections.length,
+          "sections stored",
+        );
       sections.forEach((sec, i) => {
-        if (window.DEBUG_MODE) console.log(`  Section ${i + 1}:`, sec.header, `(${sec.buttons ? sec.buttons.length : 0} buttons)`);
+        if (window.DEBUG_MODE)
+          console.log(
+            `  Section ${i + 1}:`,
+            sec.header,
+            `(${sec.buttons ? sec.buttons.length : 0} buttons)`,
+          );
       });
     } else {
-      if (window.DEBUG_MODE) console.log("⚠ Supabase verification: No sections stored yet");
+      if (window.DEBUG_MODE)
+        console.log("⚠ Supabase verification: No sections stored yet");
     }
   } catch (error) {
     if (window.DEBUG_MODE) console.error("Error verifying sections:", error);
@@ -3952,22 +4679,29 @@ async function verifySectionsInSupabase() {
 async function verifyEventsInSupabase() {
   try {
     const { data: settingsData, error } = await supabaseClient
-      .from('site_settings')
-      .select('settings')
-      .eq('id', 1)
+      .from("site_settings")
+      .select("settings")
+      .eq("id", 1)
       .single();
-      
+
     if (error) throw error;
 
     const events = settingsData?.settings?.events || [];
     if (Array.isArray(events) && events.length > 0) {
-      if (window.DEBUG_MODE) console.log("✓ Supabase verification:", events.length, "events stored");
+      if (window.DEBUG_MODE)
+        console.log("✓ Supabase verification:", events.length, "events stored");
       events.forEach((ev, i) => {
         const isValid = ev.id && ev.title && ev.start && ev.end;
-        if (window.DEBUG_MODE) console.log(`  Event ${i + 1}:`, ev.title, `(${ev.start} - ${ev.end}) ${isValid ? '✓' : '✗ INVALID'}`);
+        if (window.DEBUG_MODE)
+          console.log(
+            `  Event ${i + 1}:`,
+            ev.title,
+            `(${ev.start} - ${ev.end}) ${isValid ? "✓" : "✗ INVALID"}`,
+          );
       });
     } else {
-      if (window.DEBUG_MODE) console.log("⚠ Supabase verification: No events stored yet");
+      if (window.DEBUG_MODE)
+        console.log("⚠ Supabase verification: No events stored yet");
     }
   } catch (error) {
     if (window.DEBUG_MODE) console.error("Error verifying events:", error);
@@ -3975,33 +4709,35 @@ async function verifyEventsInSupabase() {
 }
 
 // Status check function
-window.sectionsStatus = function() {
+window.sectionsStatus = function () {
   // Check Supabase - use ID 1 for main settings
   supabaseClient
-    .from('site_settings')
-    .select('settings')
-    .eq('id', 1)
+    .from("site_settings")
+    .select("settings")
+    .eq("id", 1)
     .single()
     .then(({ data: settingsData, error }) => {
       if (error) {
-        if (window.DEBUG_MODE) console.log("3. Supabase sections: error -", error.message);
+        if (window.DEBUG_MODE)
+          console.log("3. Supabase sections: error -", error.message);
       } else {
         const sections = settingsData?.settings?.sections;
-        if (window.DEBUG_MODE) console.log("3. Supabase sections:", sections ? sections.length : 0);
+        if (window.DEBUG_MODE)
+          console.log("3. Supabase sections:", sections ? sections.length : 0);
       }
     });
 };
 
 // Force backup function
-window.forceBackup = function() {
+window.forceBackup = function () {
   backupSiteSettings();
 };
 
 // Check all backups
-window.checkAllBackups = function() {
+window.checkAllBackups = function () {
   // Memory backup
   const memBackup = siteSettingsBackup ? "exists" : "none";
-  
+
   // localStorage backup
   let localBackup = "none";
   try {
@@ -4012,12 +4748,12 @@ window.checkAllBackups = function() {
   } catch (e) {
     localBackup = "error";
   }
-  
+
   // Supabase backup - use ID 2 for backup
   supabaseClient
-    .from('site_settings')
-    .select('settings')
-    .eq('id', 2)
+    .from("site_settings")
+    .select("settings")
+    .eq("id", 2)
     .single()
     .then(({ data: backupData, error }) => {
       if (error) {
@@ -4046,14 +4782,14 @@ async function confirmDelete() {
 
     // Remove from local array
     events = events.filter((e) => e.id !== deleteEventId);
-    
+
     try {
       // CRITICAL FIX: Delete directly from separate events table
       const { error: deleteError } = await supabaseClient
-        .from('events')
+        .from("events")
         .delete()
-        .eq('id', deleteEventId);
-      
+        .eq("id", deleteEventId);
+
       if (deleteError) {
         console.error("Failed to delete event from database:", deleteError);
         // Re-sync the current month instead of rewriting the full events table
@@ -4067,7 +4803,7 @@ async function confirmDelete() {
       }
       eventDetailsCache.delete(deleteEventId);
       delete eventImageMap[String(deleteEventId)];
-      
+
       renderEventList();
       renderCalendar();
       closeDeleteModal();
@@ -4080,15 +4816,17 @@ async function confirmDelete() {
 
     try {
       await saveCustomSections();
-      
+
       renderCustomLinks();
       updateSectionCountBadge();
       openSectionList();
       closeDeleteModal();
 
       setTimeout(() => {
-        document.querySelector("#deleteModal h3").textContent = "Delete Program?";
-        document.querySelector("#deleteModal p").textContent = "This action cannot be undone.";
+        document.querySelector("#deleteModal h3").textContent =
+          "Delete Program?";
+        document.querySelector("#deleteModal p").textContent =
+          "This action cannot be undone.";
       }, 300);
 
       deleteSectionIdx = null;
@@ -4118,7 +4856,11 @@ function closeDeleteModal() {
 function sortSectionsForTopPriority(sections) {
   if (!Array.isArray(sections)) return [];
 
-  const normalizeHeader = (value) => String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const normalizeHeader = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
   const getPriority = (section) => {
     const header = normalizeHeader(section && section.header);
     if (header.includes("nadi availability today")) return 0;
@@ -4127,16 +4869,24 @@ function sortSectionsForTopPriority(sections) {
   };
 
   return sections
-    .map((section, index) => ({ section, index, priority: getPriority(section) }))
+    .map((section, index) => ({
+      section,
+      index,
+      priority: getPriority(section),
+    }))
     .sort((left, right) => {
-      if (left.priority !== right.priority) return left.priority - right.priority;
+      if (left.priority !== right.priority)
+        return left.priority - right.priority;
       return left.index - right.index;
     })
     .map((item) => item.section);
 }
 
 function isTopAlignedPrioritySection(section) {
-  const header = String((section && section.header) || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const header = String((section && section.header) || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
   if (!header) return false;
   if (header.includes("nadi availability today")) return true;
   return header.includes("kpi") && header.includes("reminder");
@@ -4150,15 +4900,26 @@ function getBookmarkSectionsForMenu() {
     .map((section) => {
       const cols = Number(section.cols) || 1;
       const buttons = Array.isArray(section.buttons) ? section.buttons : [];
-      const columnHeaders = Array.isArray(section.columnHeaders) ? section.columnHeaders.slice(0, cols) : [];
+      const columnHeaders = Array.isArray(section.columnHeaders)
+        ? section.columnHeaders.slice(0, cols)
+        : [];
       const buttonsByColumn = [];
 
       for (let columnIndex = 1; columnIndex <= cols; columnIndex++) {
         buttonsByColumn.push(
           buttons
-            .filter((button) => button && button.label && button.url && Number(button.col) === columnIndex)
+            .filter(
+              (button) =>
+                button &&
+                button.label &&
+                button.url &&
+                Number(button.col) === columnIndex,
+            )
             .slice()
-            .sort((left, right) => (Number(left.row) || 0) - (Number(right.row) || 0))
+            .sort(
+              (left, right) =>
+                (Number(left.row) || 0) - (Number(right.row) || 0),
+            ),
         );
       }
 
@@ -4166,10 +4927,12 @@ function getBookmarkSectionsForMenu() {
         header: section.header || "Untitled",
         cols,
         columnHeaders,
-        buttonsByColumn
+        buttonsByColumn,
       };
     })
-    .filter((section) => section.buttonsByColumn.some((columnButtons) => columnButtons.length > 0));
+    .filter((section) =>
+      section.buttonsByColumn.some((columnButtons) => columnButtons.length > 0),
+    );
 }
 
 function renderBookmarksMenu() {
@@ -4181,7 +4944,8 @@ function renderBookmarksMenu() {
 
   if (sections.length === 0) {
     const emptyState = document.createElement("div");
-    emptyState.className = "rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center";
+    emptyState.className =
+      "rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center";
 
     const title = document.createElement("div");
     title.className = "text-xs font-semibold text-slate-600";
@@ -4199,7 +4963,8 @@ function renderBookmarksMenu() {
 
   sections.forEach((section) => {
     const sectionEl = document.createElement("section");
-    sectionEl.className = "rounded-lg border border-slate-200 bg-slate-50 p-2.5 overflow-x-auto";
+    sectionEl.className =
+      "rounded-lg border border-slate-200 bg-slate-50 p-2.5 overflow-x-auto";
 
     const linksWrap = document.createElement("div");
     linksWrap.className = "grid gap-2";
@@ -4216,16 +4981,20 @@ function renderBookmarksMenu() {
         columnEl.classList.add("border-l", "border-slate-200/60", "pl-3");
       }
 
-      const headerText = String(section.columnHeaders[columnIndex] || "").trim();
+      const headerText = String(
+        section.columnHeaders[columnIndex] || "",
+      ).trim();
       const columnHeader = document.createElement("div");
-      columnHeader.className = "rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500";
+      columnHeader.className =
+        "rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500";
       columnHeader.textContent = headerText || `Column ${columnIndex + 1}`;
       columnEl.appendChild(columnHeader);
 
       const columnButtons = section.buttonsByColumn[columnIndex] || [];
       if (columnButtons.length === 0) {
         const emptyCol = document.createElement("div");
-        emptyCol.className = "rounded-md border border-dashed border-slate-200 px-2 py-3 text-center text-[10px] text-slate-300";
+        emptyCol.className =
+          "rounded-md border border-dashed border-slate-200 px-2 py-3 text-center text-[10px] text-slate-300";
         emptyCol.textContent = "No links";
         columnEl.appendChild(emptyCol);
       } else {
@@ -4242,7 +5011,8 @@ function renderBookmarksMenu() {
           label.textContent = button.label;
 
           const icon = document.createElement("i");
-          icon.className = "fa-solid fa-arrow-up-right-from-square text-[9px] shrink-0";
+          icon.className =
+            "fa-solid fa-arrow-up-right-from-square text-[9px] shrink-0";
 
           link.appendChild(label);
           link.appendChild(icon);
@@ -4343,7 +5113,8 @@ function renderCustomLinks() {
 
   const orderedSections = sortSectionsForTopPriority(siteSettings.sections);
   const topAlignedGrid = document.createElement("div");
-  topAlignedGrid.className = "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start";
+  topAlignedGrid.className =
+    "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start";
   const normalSections = [];
 
   orderedSections.forEach((sec) => {
@@ -4394,7 +5165,8 @@ function renderCustomLinks() {
         sec.columnHeaders.forEach((headerText, i) => {
           if (i < cols) {
             const colHeader = document.createElement("div");
-            colHeader.className = "text-center text-xs font-bold text-slate-600 uppercase tracking-wide py-2 border-b-2 border-slate-300";
+            colHeader.className =
+              "text-center text-xs font-bold text-slate-600 uppercase tracking-wide py-2 border-b-2 border-slate-300";
             colHeader.textContent = headerText || `Col ${i + 1}`;
             headerRow.appendChild(colHeader);
           }
@@ -4470,25 +5242,35 @@ function loadCalendarFilters() {
     };
   }
   if (document.getElementById("filterShowCategories")) {
-    document.getElementById("filterShowCategories").checked = siteSettings.calendarFilters.showCategories;
+    document.getElementById("filterShowCategories").checked =
+      siteSettings.calendarFilters.showCategories;
   }
   if (document.getElementById("filterShowHolidays")) {
-    document.getElementById("filterShowHolidays").checked = siteSettings.calendarFilters.showHolidays;
+    document.getElementById("filterShowHolidays").checked =
+      siteSettings.calendarFilters.showHolidays;
   }
   if (document.getElementById("filterShowSchoolHolidays")) {
-    document.getElementById("filterShowSchoolHolidays").checked = siteSettings.calendarFilters.showSchoolHolidays;
+    document.getElementById("filterShowSchoolHolidays").checked =
+      siteSettings.calendarFilters.showSchoolHolidays;
   }
   if (document.getElementById("filterShowOffdays")) {
-    document.getElementById("filterShowOffdays").checked = siteSettings.calendarFilters.showOffdays;
+    document.getElementById("filterShowOffdays").checked =
+      siteSettings.calendarFilters.showOffdays;
   }
 }
 
 function saveCalendarFilters() {
   siteSettings.calendarFilters = siteSettings.calendarFilters || {};
-  siteSettings.calendarFilters.showCategories = document.getElementById("filterShowCategories").checked;
-  siteSettings.calendarFilters.showHolidays = document.getElementById("filterShowHolidays").checked;
-  siteSettings.calendarFilters.showSchoolHolidays = document.getElementById("filterShowSchoolHolidays").checked;
-  siteSettings.calendarFilters.showOffdays = document.getElementById("filterShowOffdays").checked;
+  siteSettings.calendarFilters.showCategories = document.getElementById(
+    "filterShowCategories",
+  ).checked;
+  siteSettings.calendarFilters.showHolidays =
+    document.getElementById("filterShowHolidays").checked;
+  siteSettings.calendarFilters.showSchoolHolidays = document.getElementById(
+    "filterShowSchoolHolidays",
+  ).checked;
+  siteSettings.calendarFilters.showOffdays =
+    document.getElementById("filterShowOffdays").checked;
   saveBasicConfig();
   renderCalendar();
 }
@@ -4513,7 +5295,11 @@ document.addEventListener("click", (e) => {
   const panel = document.getElementById("calendarFilterPanel");
   const btn = document.getElementById("calendarFilterBtn");
   if (!panel || !btn) return;
-  if (!panel.classList.contains("filter-hidden") && !panel.contains(e.target) && !btn.contains(e.target)) {
+  if (
+    !panel.classList.contains("filter-hidden") &&
+    !panel.contains(e.target) &&
+    !btn.contains(e.target)
+  ) {
     panel.classList.add("filter-hidden");
   }
 });
@@ -4556,10 +5342,12 @@ function renderCalendar() {
     const dateStr = toLocalISOString(dayDate);
     const isToday = dateStr === toLocalISOString(today);
     const isSelected = window.selectedFilterDate === dateStr;
-    const userHolidayObj = siteSettings.publicHolidays && siteSettings.publicHolidays[dateStr];
+    const userHolidayObj =
+      siteSettings.publicHolidays && siteSettings.publicHolidays[dateStr];
     const userHoliday = userHolidayObj !== undefined ? userHolidayObj : "";
     const defaultHoliday = defaultHolidays[dateStr] || "";
-    const isHoliday = (userHoliday !== "" && userHoliday) || defaultHoliday || "";
+    const isHoliday =
+      (userHoliday !== "" && userHoliday) || defaultHoliday || "";
 
     let sHoliday = null;
     let isSchoolHoliday = false;
@@ -4579,11 +5367,19 @@ function renderCalendar() {
       } else if (defaultSchoolHolidays[key]) {
         modifiedDefaultKeys.add(key);
         if (holiday?.name && holiday.name !== "") {
-          allSchoolHolidays[holiday.start] = { name: holiday.name, start: holiday.start, end: holiday.end };
+          allSchoolHolidays[holiday.start] = {
+            name: holiday.name,
+            start: holiday.start,
+            end: holiday.end,
+          };
         }
       } else {
         if (holiday?.name && holiday.name !== "") {
-          allSchoolHolidays[holiday.start] = { name: holiday.name, start: holiday.start, end: holiday.end };
+          allSchoolHolidays[holiday.start] = {
+            name: holiday.name,
+            start: holiday.start,
+            end: holiday.end,
+          };
         }
       }
     });
@@ -4591,7 +5387,11 @@ function renderCalendar() {
     Object.keys(defaultSchoolHolidays).forEach((key) => {
       if (!deletedDefaultKeys.has(key) && !modifiedDefaultKeys.has(key)) {
         const holiday = defaultSchoolHolidays[key];
-        allSchoolHolidays[holiday.start] = { name: holiday.name, start: holiday.start, end: holiday.end };
+        allSchoolHolidays[holiday.start] = {
+          name: holiday.name,
+          start: holiday.start,
+          end: holiday.end,
+        };
       }
     });
 
@@ -4605,12 +5405,22 @@ function renderCalendar() {
       }
     });
 
-    const isManagerOffday = siteSettings.managerOffdays && siteSettings.managerOffdays.includes(dateStr);
-    const isAMOffday = siteSettings.assistantManagerOffdays && siteSettings.assistantManagerOffdays.includes(dateStr);
-    const isManagerReplacement = siteSettings.managerReplacements && siteSettings.managerReplacements.includes(dateStr);
-    const isAMReplacement = siteSettings.assistantManagerReplacements && siteSettings.assistantManagerReplacements.includes(dateStr);
+    const isManagerOffday =
+      siteSettings.managerOffdays &&
+      siteSettings.managerOffdays.includes(dateStr);
+    const isAMOffday =
+      siteSettings.assistantManagerOffdays &&
+      siteSettings.assistantManagerOffdays.includes(dateStr);
+    const isManagerReplacement =
+      siteSettings.managerReplacements &&
+      siteSettings.managerReplacements.includes(dateStr);
+    const isAMReplacement =
+      siteSettings.assistantManagerReplacements &&
+      siteSettings.assistantManagerReplacements.includes(dateStr);
 
-    const daysEvents = events.filter((e) => dateStr >= e.start && dateStr <= e.end);
+    const daysEvents = events.filter(
+      (e) => dateStr >= e.start && dateStr <= e.end,
+    );
 
     const cell = document.createElement("button");
     cell.className = `min-h-[36px] w-full rounded-lg flex flex-col items-center justify-center transition-all relative group py-1 ${isSelected ? "bg-white text-blue-600 ring-2 ring-blue-600 z-10" : "hover:bg-slate-50 text-slate-600"}`;
@@ -4624,18 +5434,28 @@ function renderCalendar() {
     numSpan.style.textShadow = "0 0 2px white";
 
     if (isToday) {
-      numSpan.className += " w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full font-bold z-[5]";
+      numSpan.className +=
+        " w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full font-bold z-[5]";
     }
 
-    if (siteSettings.calendarFilters.showHolidays && isHoliday && siteSettings.calendarFilters.showSchoolHolidays && isSchoolHoliday) {
+    if (
+      siteSettings.calendarFilters.showHolidays &&
+      isHoliday &&
+      siteSettings.calendarFilters.showSchoolHolidays &&
+      isSchoolHoliday
+    ) {
       const circle = document.createElement("span");
-      circle.className = "absolute inset-0 rounded-full border-2 border-slate-300 bg-[#fff59c] z-0";
+      circle.className =
+        "absolute inset-0 rounded-full border-2 border-slate-300 bg-[#fff59c] z-0";
       numWrapper.appendChild(circle);
     } else if (siteSettings.calendarFilters.showHolidays && isHoliday) {
       const circle = document.createElement("span");
       circle.className = "absolute inset-0 rounded-full bg-slate-300 z-0";
       numWrapper.appendChild(circle);
-    } else if (siteSettings.calendarFilters.showSchoolHolidays && isSchoolHoliday) {
+    } else if (
+      siteSettings.calendarFilters.showSchoolHolidays &&
+      isSchoolHoliday
+    ) {
       const circle = document.createElement("span");
       circle.className = "absolute inset-0 rounded-full bg-[#fff59c] z-0";
       numWrapper.appendChild(circle);
@@ -4661,21 +5481,25 @@ function renderCalendar() {
     if (siteSettings.calendarFilters.showOffdays && isManagerReplacement) {
       const line1 = document.createElement("span");
       line1.className = "absolute rounded-sm z-10";
-      line1.style.cssText = "bottom: 2px; left: 4px; width: calc(50% - 6px); height: 2px; background-color: #00aff0; box-shadow: 0 0 3px #00aff0;";
+      line1.style.cssText =
+        "bottom: 2px; left: 4px; width: calc(50% - 6px); height: 2px; background-color: #00aff0; box-shadow: 0 0 3px #00aff0;";
       numWrapper.appendChild(line1);
       const line2 = document.createElement("span");
       line2.className = "absolute rounded-sm z-10";
-      line2.style.cssText = "bottom: 2px; right: 4px; width: calc(50% - 6px); height: 2px; background-color: #00aff0; box-shadow: 0 0 3px #00aff0;";
+      line2.style.cssText =
+        "bottom: 2px; right: 4px; width: calc(50% - 6px); height: 2px; background-color: #00aff0; box-shadow: 0 0 3px #00aff0;";
       numWrapper.appendChild(line2);
     }
     if (siteSettings.calendarFilters.showOffdays && isAMReplacement) {
       const line1 = document.createElement("span");
       line1.className = "absolute rounded-sm z-10";
-      line1.style.cssText = "bottom: 2px; left: 4px; width: calc(50% - 6px); height: 2px; background-color: #90cf53; box-shadow: 0 0 3px #90cf53;";
+      line1.style.cssText =
+        "bottom: 2px; left: 4px; width: calc(50% - 6px); height: 2px; background-color: #90cf53; box-shadow: 0 0 3px #90cf53;";
       numWrapper.appendChild(line1);
       const line2 = document.createElement("span");
       line2.className = "absolute rounded-sm z-10";
-      line2.style.cssText = "bottom: 2px; right: 4px; width: calc(50% - 6px); height: 2px; background-color: #90cf53; box-shadow: 0 0 3px #90cf53;";
+      line2.style.cssText =
+        "bottom: 2px; right: 4px; width: calc(50% - 6px); height: 2px; background-color: #90cf53; box-shadow: 0 0 3px #90cf53;";
       numWrapper.appendChild(line2);
     }
 
@@ -4683,12 +5507,18 @@ function renderCalendar() {
 
     if (siteSettings.calendarFilters.showHolidays && isHoliday) {
       const hText = document.createElement("span");
-      hText.className = "text-[6px] leading-tight text-center text-slate-500 font-bold mt-0.5 px-0.5 line-clamp-1 w-full";
+      hText.className =
+        "text-[6px] leading-tight text-center text-slate-500 font-bold mt-0.5 px-0.5 line-clamp-1 w-full";
       hText.textContent = isHoliday;
       cell.appendChild(hText);
-    } else if (siteSettings.calendarFilters.showSchoolHolidays && sHoliday && (isSchoolHolidayStart || isSchoolHolidayEnd)) {
+    } else if (
+      siteSettings.calendarFilters.showSchoolHolidays &&
+      sHoliday &&
+      (isSchoolHolidayStart || isSchoolHolidayEnd)
+    ) {
       const sText = document.createElement("span");
-      sText.className = "text-[6px] leading-tight text-center text-yellow-600 font-bold mt-0.5 px-0.5 line-clamp-1 w-full";
+      sText.className =
+        "text-[6px] leading-tight text-center text-yellow-600 font-bold mt-0.5 px-0.5 line-clamp-1 w-full";
       sText.textContent = sHoliday.name;
       cell.appendChild(sText);
     }
@@ -4715,7 +5545,8 @@ function renderCalendar() {
         if (hadRangeFilter) {
           events = await loadEventsForMonth(currentYear, currentMonth);
         }
-        window.selectedFilterDate = window.selectedFilterDate === dateStr ? null : dateStr;
+        window.selectedFilterDate =
+          window.selectedFilterDate === dateStr ? null : dateStr;
         renderCalendar();
         renderEventList();
       } catch (error) {
@@ -4783,36 +5614,50 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
   const monthlyCounts = createEmptyCounts();
   let weeklyBuckets = [];
   const isNadi4uView = currentProgramListView === PROGRAM_LIST_VIEW_NADI4U;
-  const sourceEventList = Array.isArray(sourceEvents) && sourceEvents.length > 0
-    ? sourceEvents
-    : getCombinedEventListSource();
+  const sourceEventList =
+    Array.isArray(sourceEvents) && sourceEvents.length > 0
+      ? sourceEvents
+      : getCombinedEventListSource();
   const normalizedSubcategoryFilter = isNadi4uView
     ? normalizeNadi4uSubcategoryFilterValue(nadi4uSubcategoryFilter)
     : "";
-  const normalizedSubcategoryFilterSource = String(nadi4uSubcategoryFilterSource || "").trim().toLowerCase();
-  const isMultiDayInCurrentView = isNadi4uView ? isNadi4uMultiDayEvent : isRecentMultiDayEvent;
-  const normalizeCountKey = (value) => String(value || "").trim().toLowerCase();
-  const countTotal = (counts) => Object.values(counts || {}).reduce((sum, item) => {
-    return sum + (Number(item?.count) || 0);
-  }, 0);
+  const normalizedSubcategoryFilterSource = String(
+    nadi4uSubcategoryFilterSource || "",
+  )
+    .trim()
+    .toLowerCase();
+  const isMultiDayInCurrentView = isNadi4uView
+    ? isNadi4uMultiDayEvent
+    : isRecentMultiDayEvent;
+  const normalizeCountKey = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+  const countTotal = (counts) =>
+    Object.values(counts || {}).reduce((sum, item) => {
+      return sum + (Number(item?.count) || 0);
+    }, 0);
   const getEventCountCategory = (eventItem) => {
-    const mappedNadi4uCategory = eventItem?.isExternal
-      && eventItem?.source === "nadi4u"
-      && typeof eventItem?.kpiCategory === "string"
-      ? eventItem.kpiCategory
-      : "";
+    const mappedNadi4uCategory =
+      eventItem?.isExternal &&
+      eventItem?.source === "nadi4u" &&
+      typeof eventItem?.kpiCategory === "string"
+        ? eventItem.kpiCategory
+        : "";
     return mappedNadi4uCategory || eventItem?.category || "";
   };
   const getEventCountSubcategory = (eventItem, categoryKey) => {
-    const mappedNadi4uSubcategory = eventItem?.isExternal
-      && eventItem?.source === "nadi4u"
-      && typeof eventItem?.kpiSubcategory === "string"
-      ? eventItem.kpiSubcategory
-      : "";
-    const defaultSubcategory = typeof eventItem?.subcategory === "string"
-      ? eventItem.subcategory
-      : "";
-    const subcategoryLabel = String(mappedNadi4uSubcategory || defaultSubcategory || "").trim();
+    const mappedNadi4uSubcategory =
+      eventItem?.isExternal &&
+      eventItem?.source === "nadi4u" &&
+      typeof eventItem?.kpiSubcategory === "string"
+        ? eventItem.kpiSubcategory
+        : "";
+    const defaultSubcategory =
+      typeof eventItem?.subcategory === "string" ? eventItem.subcategory : "";
+    const subcategoryLabel = String(
+      mappedNadi4uSubcategory || defaultSubcategory || "",
+    ).trim();
     if (subcategoryLabel) return subcategoryLabel;
 
     if (categoryKey && categories?.[categoryKey]?.sub) {
@@ -4832,7 +5677,7 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
       counts[key] = {
         label,
         count: 0,
-        category: categoryKey || ""
+        category: categoryKey || "",
       };
     }
 
@@ -4842,10 +5687,14 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
     }
   };
 
-  let dayMultiCountSourceEvents = Array.isArray(displayEvents) ? displayEvents : [];
+  let dayMultiCountSourceEvents = Array.isArray(displayEvents)
+    ? displayEvents
+    : [];
   if (isNadi4uView) {
     const scopedFilterResult = getNadi4uScopedFilterResult(sourceEventList);
-    dayMultiCountSourceEvents = Array.isArray(scopedFilterResult.filteredBySearch)
+    dayMultiCountSourceEvents = Array.isArray(
+      scopedFilterResult.filteredBySearch,
+    )
       ? scopedFilterResult.filteredBySearch
       : [];
   }
@@ -4853,7 +5702,9 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
   dayMultiCountSourceEvents.forEach((eventItem) => {
     const countCategory = getEventCountCategory(eventItem);
     const countSubcategory = getEventCountSubcategory(eventItem, countCategory);
-    const targetCounts = isMultiDayInCurrentView(eventItem) ? multiDayCounts : todayCounts;
+    const targetCounts = isMultiDayInCurrentView(eventItem)
+      ? multiDayCounts
+      : todayCounts;
     addCount(targetCounts, countSubcategory, countCategory);
   });
 
@@ -4863,95 +5714,142 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
 
   if (isNadi4uView) {
     const normalizedSearch = normalizeNadi4uSearchQuery(nadi4uSearchQuery);
-    let nadi4uAggregateEvents = dedupeNadi4uEventsByTitle(getNadi4uEventListSource(sourceEventList));
+    let nadi4uAggregateEvents = dedupeNadi4uEventsByTitle(
+      getNadi4uEventListSource(sourceEventList),
+    );
 
     if (normalizedSubcategoryFilter) {
       nadi4uAggregateEvents = nadi4uAggregateEvents.filter((eventItem) =>
-        eventMatchesNadi4uSubcategoryFilter(eventItem, normalizedSubcategoryFilter)
+        eventMatchesNadi4uSubcategoryFilter(
+          eventItem,
+          normalizedSubcategoryFilter,
+        ),
       );
     }
 
     if (normalizedSearch) {
       nadi4uAggregateEvents = nadi4uAggregateEvents.filter((eventItem) =>
-        eventMatchesNadi4uSearch(eventItem, normalizedSearch)
+        eventMatchesNadi4uSearch(eventItem, normalizedSearch),
       );
     }
 
     const monthRange = getIsoMonthRange(currentYear, currentMonth);
-    weeklyBuckets = getMonthWeekRanges(currentYear, currentMonth).map((range) => ({
-      ...range,
-      counts: createEmptyCounts(),
-      total: 0
-    }));
+    weeklyBuckets = getMonthWeekRanges(currentYear, currentMonth).map(
+      (range) => ({
+        ...range,
+        counts: createEmptyCounts(),
+        total: 0,
+      }),
+    );
 
     nadi4uAggregateEvents.forEach((eventItem) => {
       const countCategory = getEventCountCategory(eventItem);
-      const countSubcategory = getEventCountSubcategory(eventItem, countCategory);
+      const countSubcategory = getEventCountSubcategory(
+        eventItem,
+        countCategory,
+      );
       if (!countSubcategory) return;
 
       weeklyBuckets.forEach((bucket) => {
-        if (isNadi4uEventInDateRange(eventItem, bucket.startDate, bucket.endDate)) {
+        if (
+          isNadi4uEventInDateRange(eventItem, bucket.startDate, bucket.endDate)
+        ) {
           addCount(bucket.counts, countSubcategory, countCategory);
         }
       });
 
-      if (isNadi4uEventInDateRange(eventItem, monthRange.startDate, monthRange.endDate)) {
+      if (
+        isNadi4uEventInDateRange(
+          eventItem,
+          monthRange.startDate,
+          monthRange.endDate,
+        )
+      ) {
         addCount(monthlyCounts, countSubcategory, countCategory);
       }
     });
 
     weeklyBuckets = weeklyBuckets.map((bucket) => ({
       ...bucket,
-      total: countTotal(bucket.counts)
+      total: countTotal(bucket.counts),
     }));
     monthlyTotal = countTotal(monthlyCounts);
   }
 
   const renderCountBadges = (counts, options = {}) => {
     const clickable = options?.clickable === true;
-    const clickSource = String(options?.clickSource || "monthly").trim().toLowerCase() || "monthly";
-    const categoryOrder = ["entrepreneur", "learning", "wellbeing", "awareness", "gov"];
+    const clickSource =
+      String(options?.clickSource || "monthly")
+        .trim()
+        .toLowerCase() || "monthly";
+    const categoryOrder = [
+      "entrepreneur",
+      "learning",
+      "wellbeing",
+      "awareness",
+      "gov",
+    ];
     const getCategoryRank = (categoryKey) => {
-      const index = categoryOrder.indexOf(String(categoryKey || "").trim().toLowerCase());
+      const index = categoryOrder.indexOf(
+        String(categoryKey || "")
+          .trim()
+          .toLowerCase(),
+      );
       return index >= 0 ? index : categoryOrder.length;
     };
 
     const items = Object.values(counts || {})
       .filter((item) => item && (Number(item.count) || 0) > 0)
       .sort((left, right) => {
-        const rankDiff = getCategoryRank(left.category) - getCategoryRank(right.category);
+        const rankDiff =
+          getCategoryRank(left.category) - getCategoryRank(right.category);
         if (rankDiff !== 0) return rankDiff;
 
-        const labelDiff = String(left.label || "").localeCompare(String(right.label || ""));
+        const labelDiff = String(left.label || "").localeCompare(
+          String(right.label || ""),
+        );
         if (labelDiff !== 0) return labelDiff;
 
         return (Number(right.count) || 0) - (Number(left.count) || 0);
       });
 
-    const badgesHtml = items.map((item) => {
-      const categoryMeta = categories?.[item.category] || EXTERNAL_NADI4U_CATEGORY;
-      const colorTokens = String(categoryMeta?.color || "").split(" ").filter(Boolean);
-      const bgClass = colorTokens[0] || "bg-slate-100";
-      const textClass = colorTokens[1] || "text-slate-700";
-      const borderClass = colorTokens[2] || "border-slate-200";
-      const dotClass = categoryMeta?.dot || "bg-slate-400";
-      const normalizedItemLabel = normalizeNadi4uSubcategoryFilterValue(item.label);
-      const isClickable = clickable && isNadi4uView && normalizedItemLabel.length > 0;
-      const isActive = isClickable
-        && normalizedItemLabel === normalizedSubcategoryFilter
-        && clickSource === normalizedSubcategoryFilterSource;
-      const encodedLabel = encodeURIComponent(item.label);
-      const clickableClasses = isClickable ? "cursor-pointer hover:shadow-sm hover:-translate-y-[1px] transition-all" : "";
-      const activeClasses = isActive ? "ring-2 ring-cyan-400 ring-offset-1" : "";
-      const clickAttrs = isClickable
-        ? `role="button" tabindex="0" onclick="handleNadi4uSubcategoryFilterClick(decodeURIComponent('${encodedLabel}'),'${clickSource}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleNadi4uSubcategoryFilterClick(decodeURIComponent('${encodedLabel}'),'${clickSource}');}"`
-        : "";
+    const badgesHtml = items
+      .map((item) => {
+        const categoryMeta =
+          categories?.[item.category] || EXTERNAL_NADI4U_CATEGORY;
+        const colorTokens = String(categoryMeta?.color || "")
+          .split(" ")
+          .filter(Boolean);
+        const bgClass = colorTokens[0] || "bg-slate-100";
+        const textClass = colorTokens[1] || "text-slate-700";
+        const borderClass = colorTokens[2] || "border-slate-200";
+        const dotClass = categoryMeta?.dot || "bg-slate-400";
+        const normalizedItemLabel = normalizeNadi4uSubcategoryFilterValue(
+          item.label,
+        );
+        const isClickable =
+          clickable && isNadi4uView && normalizedItemLabel.length > 0;
+        const isActive =
+          isClickable &&
+          normalizedItemLabel === normalizedSubcategoryFilter &&
+          clickSource === normalizedSubcategoryFilterSource;
+        const encodedLabel = encodeURIComponent(item.label);
+        const clickableClasses = isClickable
+          ? "cursor-pointer hover:shadow-sm hover:-translate-y-[1px] transition-all"
+          : "";
+        const activeClasses = isActive
+          ? "ring-2 ring-cyan-400 ring-offset-1"
+          : "";
+        const clickAttrs = isClickable
+          ? `role="button" tabindex="0" onclick="handleNadi4uSubcategoryFilterClick(decodeURIComponent('${encodedLabel}'),'${clickSource}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleNadi4uSubcategoryFilterClick(decodeURIComponent('${encodedLabel}'),'${clickSource}');}"`
+          : "";
 
-      return `<div class="flex items-center gap-1.5 px-2 py-1 ${bgClass} border ${borderClass} rounded-md ${clickableClasses} ${activeClasses}" ${clickAttrs}>
+        return `<div class="flex items-center gap-1.5 px-2 py-1 ${bgClass} border ${borderClass} rounded-md ${clickableClasses} ${activeClasses}" ${clickAttrs}>
         <span class="w-2 h-2 rounded-full ${dotClass}"></span>
         <span class="text-[8px] font-bold ${textClass}">${escapeHtml(item.label)}: ${item.count}</span>
       </div>`;
-    }).join("");
+      })
+      .join("");
 
     if (!badgesHtml) {
       return '<div class="text-[8px] italic text-slate-400">No events</div>';
@@ -4959,10 +5857,18 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
     return `<div class="flex flex-wrap gap-2">${badgesHtml}</div>`;
   };
 
-  const renderCountSection = (sectionLabel, sectionCounts, sectionTotal, options = {}) => {
+  const renderCountSection = (
+    sectionLabel,
+    sectionCounts,
+    sectionTotal,
+    options = {},
+  ) => {
     const isFirst = options?.isFirst === true;
     const clickable = options?.clickable === true;
-    const clickSource = String(options?.clickSource || "monthly").trim().toLowerCase() || "monthly";
+    const clickSource =
+      String(options?.clickSource || "monthly")
+        .trim()
+        .toLowerCase() || "monthly";
     return `
     <div class="${isFirst ? "" : "mt-3 pt-3 border-t border-slate-100"}">
       <div class="flex items-center justify-between mb-1">
@@ -4978,13 +5884,19 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
     if (!Array.isArray(buckets) || buckets.length === 0) return "";
     const isFirst = options?.isFirst === true;
     const clickable = options?.clickable === true;
-    const clickSourceBase = String(options?.clickSource || "weekly").trim().toLowerCase() || "weekly";
+    const clickSourceBase =
+      String(options?.clickSource || "weekly")
+        .trim()
+        .toLowerCase() || "weekly";
     const weeklyViewMode = getCurrentNadi4uWeeklyViewMode();
-    const visibleBuckets = weeklyViewMode === NADI4U_WEEKLY_VIEW_ALL
-      ? buckets
-      : getNadi4uRecentWeeklyBuckets(buckets);
+    const visibleBuckets =
+      weeklyViewMode === NADI4U_WEEKLY_VIEW_ALL
+        ? buckets
+        : getNadi4uRecentWeeklyBuckets(buckets);
 
-    const weekRows = visibleBuckets.map((bucket) => `
+    const weekRows = visibleBuckets
+      .map(
+        (bucket) => `
       <div class="rounded-md border border-slate-100 bg-slate-50 p-2">
         <div class="flex items-center justify-between mb-1">
           <span class="text-[8px] font-bold uppercase tracking-wide text-slate-500">Week ${bucket.weekIndex} (${bucket.startDay}-${bucket.endDay})</span>
@@ -4992,7 +5904,9 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
         </div>
         ${renderCountBadges(bucket.counts, { clickable, clickSource: `${clickSourceBase}:${bucket.weekIndex}` })}
       </div>
-    `).join("");
+    `,
+      )
+      .join("");
 
     return `
       <div class="${isFirst ? "" : "mt-3 pt-3 border-t border-slate-100"}">
@@ -5015,19 +5929,38 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
   };
 
   // BASE_CLASS: bg-white rounded-lg border border-slate-200 p-3 shadow-sm
-  let html = '<div class="bg-white rounded-xl shadow-card border border-slate-200 p-5">';
-  html += '<div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Total Programs</div>';
+  let html =
+    '<div class="bg-white rounded-xl shadow-card border border-slate-200 p-5">';
+  html +=
+    '<div class="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Total Programs</div>';
   let hasRenderedSection = false;
-  html += renderCountSection(getProgramListDaySectionLabel(), todayCounts, todayTotal, { isFirst: true, clickable: true, clickSource: "day" });
+  html += renderCountSection(
+    getProgramListDaySectionLabel(),
+    todayCounts,
+    todayTotal,
+    { isFirst: true, clickable: true, clickSource: "day" },
+  );
   hasRenderedSection = true;
-  html += renderCountSection("Multiple Day Events", multiDayCounts, multiDayTotal, { isFirst: false, clickable: true, clickSource: "multi" });
+  html += renderCountSection(
+    "Multiple Day Events",
+    multiDayCounts,
+    multiDayTotal,
+    { isFirst: false, clickable: true, clickSource: "multi" },
+  );
   if (isNadi4uView) {
-    const weeklySectionHtml = renderWeeklyBreakdownSection(weeklyBuckets, { isFirst: !hasRenderedSection, clickable: true, clickSource: "weekly" });
+    const weeklySectionHtml = renderWeeklyBreakdownSection(weeklyBuckets, {
+      isFirst: !hasRenderedSection,
+      clickable: true,
+      clickSource: "weekly",
+    });
     if (weeklySectionHtml) {
       html += weeklySectionHtml;
       hasRenderedSection = true;
     }
-    html += renderCountSection("Monthly Events", monthlyCounts, monthlyTotal, { isFirst: !hasRenderedSection, clickable: true });
+    html += renderCountSection("Monthly Events", monthlyCounts, monthlyTotal, {
+      isFirst: !hasRenderedSection,
+      clickable: true,
+    });
   }
   html += "</div>";
   container.innerHTML = html;
@@ -5040,28 +5973,33 @@ function createProgramEventCardElement(ev) {
     return null;
   }
 
-  const displayCategoryKey = ev?.isExternal && ev?.source === "nadi4u" && ev?.kpiCategory
-    ? ev.kpiCategory
-    : ev.category;
+  const displayCategoryKey =
+    ev?.isExternal && ev?.source === "nadi4u" && ev?.kpiCategory
+      ? ev.kpiCategory
+      : ev.category;
   const cat = categories[displayCategoryKey] || EXTERNAL_NADI4U_CATEGORY;
-  const displaySubcategory = ev?.isExternal && ev?.source === "nadi4u" && ev?.kpiSubcategory
-    ? ev.kpiSubcategory
-    : ev.subcategory;
+  const displaySubcategory =
+    ev?.isExternal && ev?.source === "nadi4u" && ev?.kpiSubcategory
+      ? ev.kpiSubcategory
+      : ev.subcategory;
 
   const card = document.createElement("div");
-  card.className = "event-card glow-card group bg-white rounded-lg border border-slate-200 p-2 shadow-sm relative";
+  card.className =
+    "event-card glow-card group bg-white rounded-lg border border-slate-200 p-2 shadow-sm relative";
 
   const startParts = ev.start.split("-");
   const endParts = ev.end.split("-");
   if (startParts.length !== 3 || endParts.length !== 3) {
-    if (window.DEBUG_MODE) console.warn("Invalid date format for event:", ev.id, ev.start, ev.end);
+    if (window.DEBUG_MODE)
+      console.warn("Invalid date format for event:", ev.id, ev.start, ev.end);
     return null;
   }
 
   const d1 = new Date(startParts[0], startParts[1] - 1, startParts[2]);
   const d2 = new Date(endParts[0], endParts[1] - 1, endParts[2]);
   if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
-    if (window.DEBUG_MODE) console.warn("Invalid date for event:", ev.id, d1, d2);
+    if (window.DEBUG_MODE)
+      console.warn("Invalid date for event:", ev.id, d1, d2);
     return null;
   }
 
@@ -5071,7 +6009,8 @@ function createProgramEventCardElement(ev) {
     const range = getNadi4uScheduleDateRange(ev);
     if (range.startDate) {
       const parsedStart = new Date(`${range.startDate}T00:00:00`);
-      if (!Number.isNaN(parsedStart.getTime())) dateStartForDisplay = parsedStart;
+      if (!Number.isNaN(parsedStart.getTime()))
+        dateStartForDisplay = parsedStart;
     }
     if (range.endDate) {
       const parsedEnd = new Date(`${range.endDate}T00:00:00`);
@@ -5079,11 +6018,18 @@ function createProgramEventCardElement(ev) {
     }
   }
 
-  let dateDisplay = dateStartForDisplay.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  let dateDisplay = dateStartForDisplay.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
   let dateDisplayHtml = escapeHtml(dateDisplay.toUpperCase());
-  const isMultiDayDisplay = dateStartForDisplay.toDateString() !== dateEndForDisplay.toDateString();
+  const isMultiDayDisplay =
+    dateStartForDisplay.toDateString() !== dateEndForDisplay.toDateString();
   if (isMultiDayDisplay) {
-    const rangeEndDisplay = dateEndForDisplay.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const rangeEndDisplay = dateEndForDisplay.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+    });
     dateDisplay = `${dateDisplay} - ${rangeEndDisplay}`;
     dateDisplayHtml = escapeHtml(dateDisplay.toUpperCase());
   }
@@ -5104,53 +6050,60 @@ function createProgramEventCardElement(ev) {
   }
 
   let actionLinksHtml = "";
-  const mergedRegistrationLinks = mergeRegistrationLinksWithProgramInfo(ev.registrationLinks, ev.info);
+  const mergedRegistrationLinks = mergeRegistrationLinksWithProgramInfo(
+    ev.registrationLinks,
+    ev.info,
+  );
   const hasRegistrationLinks = mergedRegistrationLinks.length > 0;
   const hasSubmitLinks = ev.submitLinks && ev.submitLinks.length > 0;
   if (hasRegistrationLinks || hasSubmitLinks) {
     actionLinksHtml = '<div class="mt-2 space-y-2">';
     if (hasRegistrationLinks) {
       actionLinksHtml += '<div class="flex flex-col gap-1">';
-      actionLinksHtml += '<label class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Registration Link</label>';
+      actionLinksHtml +=
+        '<label class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Registration Link</label>';
       mergedRegistrationLinks.forEach((link) => {
         if (link.url) {
           actionLinksHtml += `
           <div class="flex items-center gap-2 text-[9px] bg-slate-50 px-2 py-1 rounded border border-slate-100 relative overflow-hidden flex-wrap sm:flex-nowrap">
-            <span class="font-bold text-slate-600 w-12 truncate shrink-0">${link.platform || 'NES'}</span>
-            <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline truncate ${link.message ? 'shrink-0 max-w-[150px]' : 'flex-1 block'}">${link.url}</a>
-            ${link.message ? `<span class="text-red-500 font-bold ml-auto shrink-0 truncate">${link.message}</span>` : ''}
+            <span class="font-bold text-slate-600 w-12 truncate shrink-0">${link.platform || "NES"}</span>
+            <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline truncate ${link.message ? "shrink-0 max-w-[150px]" : "flex-1 block"}">${link.url}</a>
+            ${link.message ? `<span class="text-red-500 font-bold ml-auto shrink-0 truncate">${link.message}</span>` : ""}
           </div>`;
         }
       });
-      actionLinksHtml += '</div>';
+      actionLinksHtml += "</div>";
     }
     if (hasSubmitLinks) {
       actionLinksHtml += '<div class="flex flex-col gap-1">';
-      actionLinksHtml += '<label class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Submit Link</label>';
+      actionLinksHtml +=
+        '<label class="text-[8px] font-bold text-slate-400 uppercase tracking-wide">Submit Link</label>';
       ev.submitLinks.forEach((link) => {
         if (link.url) {
           actionLinksHtml += `
           <div class="flex items-center gap-2 text-[9px] bg-slate-50 px-2 py-1 rounded border border-slate-100 relative overflow-hidden">
-            <span class="font-bold text-slate-600 w-12 truncate shrink-0">${link.platform || 'Jotform'}</span>
+            <span class="font-bold text-slate-600 w-12 truncate shrink-0">${link.platform || "Jotform"}</span>
             <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline truncate flex-1 block">${link.url}</a>
           </div>`;
         }
       });
-      actionLinksHtml += '</div>';
+      actionLinksHtml += "</div>";
     }
     actionLinksHtml += "</div>";
   }
 
-  const infoMarkup = typeof ev.info === "string"
-    ? buildProgramInfoMarkup(ev.id, ev.info, ev.images)
-    : '<span class="text-[9px] text-slate-400 italic">Loading program info...</span>';
+  const infoMarkup =
+    typeof ev.info === "string"
+      ? buildProgramInfoMarkup(ev.id, ev.info, ev.images)
+      : '<span class="text-[9px] text-slate-400 italic">Loading program info...</span>';
   const hasLoadedDetails = eventDetailsCache.has(ev.id);
   const hasProgramInfo = hasLoadedDetails
     ? hasProgramInfoValue(ev.info, ev.images, false)
     : true;
   const infoIndicatorColor = hasProgramInfo ? "#cb233b" : "#94a3b8";
-  const actionButtonsHtml = showEditDeleteButtons && !ev.isExternal
-    ? `<div class="absolute top-0 right-0 flex gap-2 opacity-100 transition-opacity bg-white/80 backdrop-blur pl-2 pb-1 rounded-bl-lg">
+  const actionButtonsHtml =
+    showEditDeleteButtons && !ev.isExternal
+      ? `<div class="absolute top-0 right-0 flex gap-2 opacity-100 transition-opacity bg-white/80 backdrop-blur pl-2 pb-1 rounded-bl-lg">
         <button onclick="openModal('${ev.id}')" class="text-slate-400 hover:text-blue-600 transition-colors" title="Edit">
           <i class="fa-solid fa-pen text-xs"></i>
         </button>
@@ -5158,16 +6111,22 @@ function createProgramEventCardElement(ev) {
           <i class="fa-solid fa-trash text-xs"></i>
         </button>
       </div>`
-    : "";
-  const programTypeLabel = ev?.isExternal && ev?.source === "nadi4u" && typeof ev?.programType === "string"
-    ? ev.programType.trim()
-    : "";
+      : "";
+  const programTypeLabel =
+    ev?.isExternal &&
+    ev?.source === "nadi4u" &&
+    typeof ev?.programType === "string"
+      ? ev.programType.trim()
+      : "";
   const programTypeTranslations = {
-    "ADVOCACY": "ADVOKASI"
+    ADVOCACY: "ADVOKASI",
   };
-  const translatedProgramType = programTypeTranslations[programTypeLabel.toUpperCase()] || programTypeLabel;
+  const translatedProgramType =
+    programTypeTranslations[programTypeLabel.toUpperCase()] || programTypeLabel;
   const isLearningCategoryCard = displayCategoryKey === "learning";
-  const categoryBadgeWidthClass = isLearningCategoryCard ? "min-w-[110px] max-w-[110px]" : "min-w-[80px]";
+  const categoryBadgeWidthClass = isLearningCategoryCard
+    ? "min-w-[110px] max-w-[110px]"
+    : "min-w-[80px]";
   const categoryLabelClass = isLearningCategoryCard
     ? "text-[9px] font-bold uppercase leading-tight whitespace-normal break-words text-right"
     : "text-[9px] font-bold uppercase whitespace-nowrap leading-none";
@@ -5224,42 +6183,50 @@ function getSectionProgramListPageStateKey(sectionKey) {
     : getTodayProgramListPageStateKey();
 }
 
-function renderSectionPagination(sectionKey, currentPage, totalPages, shouldFloatPagination) {
+function renderSectionPagination(
+  sectionKey,
+  currentPage,
+  totalPages,
+  shouldFloatPagination,
+) {
   if (totalPages <= 1) return "";
 
-  const pageButtonsHtml = Array.from({ length: totalPages }, (_, index) => `
+  const pageButtonsHtml = Array.from(
+    { length: totalPages },
+    (_, index) => `
     <button
       onclick="setSectionEventPage('${sectionKey}', ${index})"
       class="min-w-[28px] px-2 py-1.5 text-[10px] sm:min-w-[32px] sm:px-2 sm:py-2 sm:text-xs font-bold rounded transition-colors ${
         index === currentPage
-          ? 'bg-[#2228a4] text-white shadow-sm'
-          : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+          ? "bg-[#2228a4] text-white shadow-sm"
+          : "bg-slate-100 hover:bg-slate-200 text-slate-600"
       }"
       aria-label="Go to page ${index + 1}"
-      ${index === currentPage ? 'aria-current="page"' : ''}
+      ${index === currentPage ? 'aria-current="page"' : ""}
     >
       ${index + 1}
     </button>
-  `).join("");
+  `,
+  ).join("");
 
   if (shouldFloatPagination) {
     return `
       <div class="pagination-controls fixed inset-x-0 bottom-2 sm:bottom-4 z-40 flex justify-center px-2 sm:px-4 pointer-events-none">
         <div class="flex justify-center items-center gap-2 sm:gap-4 max-w-max rounded-xl border border-slate-200 bg-white/95 px-2 py-2 sm:px-4 sm:py-3 shadow-lg backdrop-blur pointer-events-auto">
-          <button 
-            onclick="changeSectionEventPage('${sectionKey}', -1)" 
-            class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-            ${currentPage === 0 ? 'disabled' : ''}
+          <button
+            onclick="changeSectionEventPage('${sectionKey}', -1)"
+            class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""}"
+            ${currentPage === 0 ? "disabled" : ""}
           >
             <i class="fa-solid fa-chevron-left mr-1"></i> Previous
           </button>
           <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center">
             ${pageButtonsHtml}
           </div>
-          <button 
-            onclick="changeSectionEventPage('${sectionKey}', 1)" 
-            class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}"
-            ${currentPage >= totalPages - 1 ? 'disabled' : ''}
+          <button
+            onclick="changeSectionEventPage('${sectionKey}', 1)"
+            class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage >= totalPages - 1 ? "opacity-50 cursor-not-allowed" : ""}"
+            ${currentPage >= totalPages - 1 ? "disabled" : ""}
           >
             Next <i class="fa-solid fa-chevron-right ml-1"></i>
           </button>
@@ -5270,20 +6237,20 @@ function renderSectionPagination(sectionKey, currentPage, totalPages, shouldFloa
 
   return `
     <div class="pagination-controls mt-4 pt-4 border-t border-slate-100 flex justify-center items-center gap-2 sm:gap-4">
-      <button 
-        onclick="changeSectionEventPage('${sectionKey}', -1)" 
-        class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-        ${currentPage === 0 ? 'disabled' : ''}
+      <button
+        onclick="changeSectionEventPage('${sectionKey}', -1)"
+        class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""}"
+        ${currentPage === 0 ? "disabled" : ""}
       >
         <i class="fa-solid fa-chevron-left mr-1"></i> Previous
       </button>
       <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center">
         ${pageButtonsHtml}
       </div>
-      <button 
-        onclick="changeSectionEventPage('${sectionKey}', 1)" 
-        class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}"
-        ${currentPage >= totalPages - 1 ? 'disabled' : ''}
+      <button
+        onclick="changeSectionEventPage('${sectionKey}', 1)"
+        class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage >= totalPages - 1 ? "opacity-50 cursor-not-allowed" : ""}"
+        ${currentPage >= totalPages - 1 ? "disabled" : ""}
       >
         Next <i class="fa-solid fa-chevron-right ml-1"></i>
       </button>
@@ -5307,7 +6274,8 @@ function renderProgramEventSection(rootContainer, options = {}) {
   sectionEl.className = "space-y-3";
 
   const summaryBar = document.createElement("div");
-  summaryBar.className = "flex flex-col items-center justify-center text-center gap-1";
+  summaryBar.className =
+    "flex flex-col items-center justify-center text-center gap-1";
   summaryBar.innerHTML = `
     <h3 class="text-base sm:text-lg font-bold uppercase tracking-[0.18em] text-slate-700" style="font-family: var(--font-family-display);">${escapeHtml(sectionLabel)}</h3>
     <span class="text-[11px] font-semibold text-slate-400">${eventList.length} listed</span>
@@ -5316,7 +6284,8 @@ function renderProgramEventSection(rootContainer, options = {}) {
 
   const listContainer = document.createElement("div");
   listContainer.className = "space-y-2";
-  listContainer.style.paddingBottom = shouldFloatPagination && eventList.length > eventsPerPage ? "88px" : "";
+  listContainer.style.paddingBottom =
+    shouldFloatPagination && eventList.length > eventsPerPage ? "88px" : "";
 
   window[pageStateKey] = window[pageStateKey] || 0;
   const totalPages = Math.ceil(eventList.length / eventsPerPage);
@@ -5325,7 +6294,10 @@ function renderProgramEventSection(rootContainer, options = {}) {
     currentPage = totalPages - 1;
     window[pageStateKey] = currentPage;
   }
-  const paginatedEvents = eventList.slice(currentPage * eventsPerPage, (currentPage + 1) * eventsPerPage);
+  const paginatedEvents = eventList.slice(
+    currentPage * eventsPerPage,
+    (currentPage + 1) * eventsPerPage,
+  );
 
   if (eventList.length === 0) {
     window[pageStateKey] = 0;
@@ -5345,7 +6317,12 @@ function renderProgramEventSection(rootContainer, options = {}) {
 
   sectionEl.appendChild(listContainer);
 
-  const paginationHtml = renderSectionPagination(sectionKey, currentPage, totalPages, shouldFloatPagination && totalPages > 1);
+  const paginationHtml = renderSectionPagination(
+    sectionKey,
+    currentPage,
+    totalPages,
+    shouldFloatPagination && totalPages > 1,
+  );
   if (paginationHtml) {
     sectionEl.insertAdjacentHTML("beforeend", paginationHtml);
   }
@@ -5376,7 +6353,10 @@ function renderEventList() {
   eventImageMap = {};
 
   const sectionedData = getSectionedNadi4uDisplayData(allEvents);
-  const displayEvents = [...sectionedData.todayEvents, ...sectionedData.multiDayEvents];
+  const displayEvents = [
+    ...sectionedData.todayEvents,
+    ...sectionedData.multiDayEvents,
+  ];
   renderCategoryCounts(displayEvents, allEvents);
 
   eventListLookup = new Map();
@@ -5403,8 +6383,9 @@ function renderEventList() {
       sectionLabel: "Multiple Day Events",
       eventList: sectionedData.multiDayEvents,
       emptyTitle: "No Multiple Day Events found",
-      emptySubtitle: "No multi-day Smart Services NADI4U programs match current filter.",
-      floatPagination: true
+      emptySubtitle:
+        "No multi-day Smart Services NADI4U programs match current filter.",
+      floatPagination: true,
     });
   } else {
     visibleTodayEvents = renderProgramEventSection(container, {
@@ -5413,7 +6394,8 @@ function renderEventList() {
       sectionLabel: "Today Events",
       eventList: sectionedData.todayEvents,
       emptyTitle: "No Today Events found",
-      emptySubtitle: "No Smart Services NADI4U programs match current filter for today."
+      emptySubtitle:
+        "No Smart Services NADI4U programs match current filter for today.",
     });
   }
 
@@ -5437,7 +6419,10 @@ function renderEventList() {
 function changeSectionEventPage(sectionKey, direction) {
   const allEvents = getCombinedEventListSource();
   const sectionedData = getSectionedNadi4uDisplayData(allEvents);
-  const eventList = sectionKey === "multi" ? sectionedData.multiDayEvents : sectionedData.todayEvents;
+  const eventList =
+    sectionKey === "multi"
+      ? sectionedData.multiDayEvents
+      : sectionedData.todayEvents;
   const pageStateKey = getSectionProgramListPageStateKey(sectionKey);
   const eventsPerPage = getProgramListEventsPerPage(sectionKey);
   const totalPages = Math.ceil(eventList.length / eventsPerPage);
@@ -5449,14 +6434,20 @@ function changeSectionEventPage(sectionKey, direction) {
   }
 
   window[pageStateKey] = window[pageStateKey] || 0;
-  window[pageStateKey] = Math.max(0, Math.min(totalPages - 1, window[pageStateKey] + direction));
+  window[pageStateKey] = Math.max(
+    0,
+    Math.min(totalPages - 1, window[pageStateKey] + direction),
+  );
   renderEventList();
 }
 
 function setSectionEventPage(sectionKey, pageIndex) {
   const allEvents = getCombinedEventListSource();
   const sectionedData = getSectionedNadi4uDisplayData(allEvents);
-  const eventList = sectionKey === "multi" ? sectionedData.multiDayEvents : sectionedData.todayEvents;
+  const eventList =
+    sectionKey === "multi"
+      ? sectionedData.multiDayEvents
+      : sectionedData.todayEvents;
   const pageStateKey = getSectionProgramListPageStateKey(sectionKey);
   const eventsPerPage = getProgramListEventsPerPage(sectionKey);
   const totalPages = Math.ceil(eventList.length / eventsPerPage);
@@ -5467,8 +6458,13 @@ function setSectionEventPage(sectionKey, pageIndex) {
     return;
   }
 
-  const normalizedPageIndex = Number.isFinite(pageIndex) ? pageIndex : Number(pageIndex);
-  window[pageStateKey] = Math.max(0, Math.min(totalPages - 1, normalizedPageIndex || 0));
+  const normalizedPageIndex = Number.isFinite(pageIndex)
+    ? pageIndex
+    : Number(pageIndex);
+  window[pageStateKey] = Math.max(
+    0,
+    Math.min(totalPages - 1, normalizedPageIndex || 0),
+  );
   renderEventList();
 }
 
@@ -5480,7 +6476,6 @@ function addLinkRow(platform = "NES", url = "") {
   // Keeping for backward compatibility but does nothing
 }
 
-
 function addRegistrationLink(platform = "Gform", url = "") {
   const container = document.getElementById("registrationLinksContainer");
   const id = Date.now() + Math.random();
@@ -5488,7 +6483,12 @@ function addRegistrationLink(platform = "Gform", url = "") {
   div.className = "flex gap-2 items-center";
   div.id = `reglink-${id}`;
 
-  const options = platformOptions.map((opt) => `<option value="${opt}" ${platform === opt ? "selected" : ""}>${opt}</option>`).join("");
+  const options = platformOptions
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${platform === opt ? "selected" : ""}>${opt}</option>`,
+    )
+    .join("");
 
   div.innerHTML = `
     <select class="w-1/3 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none reg-link-platform cursor-pointer">${options}</select>
@@ -5505,7 +6505,12 @@ function addSubmitLink(platform = "Gform", url = "") {
   div.className = "flex gap-2 items-center";
   div.id = `sublink-${id}`;
 
-  const options = platformOptions.map((opt) => `<option value="${opt}" ${platform === opt ? "selected" : ""}>${opt}</option>`).join("");
+  const options = platformOptions
+    .map(
+      (opt) =>
+        `<option value="${opt}" ${platform === opt ? "selected" : ""}>${opt}</option>`,
+    )
+    .join("");
 
   div.innerHTML = `
     <select class="w-1/3 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none sub-link-platform cursor-pointer">${options}</select>
@@ -5514,7 +6519,6 @@ function addSubmitLink(platform = "Gform", url = "") {
   `;
   container.appendChild(div);
 }
-
 
 function fixLinkUrl(input) {
   let url = input.value.trim();
@@ -5535,7 +6539,6 @@ function removeSubmitLink(id) {
   document.getElementById(`sublink-${id}`).remove();
 }
 
-
 async function openModal(id = null, dateHint = null) {
   showModal("eventModal", "modalPanel", "eventTitle");
   await ensureProgramImagesFeatureSupport();
@@ -5551,7 +6554,7 @@ async function openModal(id = null, dateHint = null) {
     const subContainer = document.getElementById("submitLinksContainer");
     if (regContainer) regContainer.innerHTML = "";
     if (subContainer) subContainer.innerHTML = "";
-    
+
     document.getElementById("modalTitle").textContent = "Edit Program";
     document.getElementById("eventId").value = ev.id;
     document.getElementById("eventTitle").value = ev.title;
@@ -5560,11 +6563,11 @@ async function openModal(id = null, dateHint = null) {
     document.getElementById("startDate").value = eventStartDisplay;
     document.getElementById("endDate").value = eventEndDisplay;
 
-
-
     let eventInfo = typeof ev.info === "string" ? ev.info : "";
     let eventImages = normalizeProgramImages(ev.images);
-    const needsDetailsFetch = typeof ev.info !== "string" || (programImagesEnabled && !Array.isArray(ev.images));
+    const needsDetailsFetch =
+      typeof ev.info !== "string" ||
+      (programImagesEnabled && !Array.isArray(ev.images));
     if (needsDetailsFetch) {
       try {
         const details = await loadEventDetailsById(ev.id);
@@ -5587,7 +6590,9 @@ async function openModal(id = null, dateHint = null) {
       infoContainer.classList.remove("hidden");
     }
 
-    const catRadio = document.querySelector(`input[name="category"][value="${ev.category}"]`);
+    const catRadio = document.querySelector(
+      `input[name="category"][value="${ev.category}"]`,
+    );
     if (catRadio) {
       catRadio.checked = true;
       updateSubcategories(ev.category);
@@ -5607,18 +6612,26 @@ async function openModal(id = null, dateHint = null) {
       if (startPart) {
         const timeMatch = startPart.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
-          document.getElementById("timeHour").value = timeMatch[1].padStart(2, "0");
+          document.getElementById("timeHour").value = timeMatch[1].padStart(
+            2,
+            "0",
+          );
           document.getElementById("timeMinute").value = timeMatch[2];
-          document.getElementById("timeAMPM").value = timeMatch[3].toUpperCase();
+          document.getElementById("timeAMPM").value =
+            timeMatch[3].toUpperCase();
         }
       }
 
       if (endPart) {
         const timeMatch = endPart.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
-          document.getElementById("endTimeHour").value = timeMatch[1].padStart(2, "0");
+          document.getElementById("endTimeHour").value = timeMatch[1].padStart(
+            2,
+            "0",
+          );
           document.getElementById("endTimeMinute").value = timeMatch[2];
-          document.getElementById("endTimeAMPM").value = timeMatch[3].toUpperCase();
+          document.getElementById("endTimeAMPM").value =
+            timeMatch[3].toUpperCase();
         }
       } else {
         document.getElementById("endTimeHour").value = "";
@@ -5636,7 +6649,9 @@ async function openModal(id = null, dateHint = null) {
 
     if (ev.secondTime) {
       document.getElementById("hasSecondSession").checked = true;
-      document.getElementById("secondSessionContainer").classList.remove("hidden");
+      document
+        .getElementById("secondSessionContainer")
+        .classList.remove("hidden");
 
       const parts = ev.secondTime.split(" - ");
       const startPart = parts[0];
@@ -5645,31 +6660,38 @@ async function openModal(id = null, dateHint = null) {
       if (startPart) {
         const timeMatch = startPart.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
-          document.getElementById("time2Hour").value = timeMatch[1].padStart(2, "0");
+          document.getElementById("time2Hour").value = timeMatch[1].padStart(
+            2,
+            "0",
+          );
           document.getElementById("time2Minute").value = timeMatch[2];
-          document.getElementById("time2AMPM").value = timeMatch[3].toUpperCase();
+          document.getElementById("time2AMPM").value =
+            timeMatch[3].toUpperCase();
         }
       }
 
       if (endPart) {
         const timeMatch = endPart.match(/(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
-          document.getElementById("endTime2Hour").value = timeMatch[1].padStart(2, "0");
+          document.getElementById("endTime2Hour").value = timeMatch[1].padStart(
+            2,
+            "0",
+          );
           document.getElementById("endTime2Minute").value = timeMatch[2];
-          document.getElementById("endTime2AMPM").value = timeMatch[3].toUpperCase();
+          document.getElementById("endTime2AMPM").value =
+            timeMatch[3].toUpperCase();
         }
       }
     } else {
-    document.getElementById("hasSecondSession").checked = false;
-    document.getElementById("secondSessionContainer").classList.add("hidden");
-    document.getElementById("time2Hour").value = "";
-    document.getElementById("time2Minute").value = "00";
-    document.getElementById("time2AMPM").value = "AM";
-    document.getElementById("endTime2Hour").value = "";
-    document.getElementById("endTime2Minute").value = "00";
-    document.getElementById("endTime2AMPM").value = "AM";
-  }
-
+      document.getElementById("hasSecondSession").checked = false;
+      document.getElementById("secondSessionContainer").classList.add("hidden");
+      document.getElementById("time2Hour").value = "";
+      document.getElementById("time2Minute").value = "00";
+      document.getElementById("time2AMPM").value = "AM";
+      document.getElementById("endTime2Hour").value = "";
+      document.getElementById("endTime2Minute").value = "00";
+      document.getElementById("endTime2AMPM").value = "AM";
+    }
 
     // Populate Registration Links (array)
     if (ev.registrationLinks && ev.registrationLinks.length > 0) {
@@ -5680,7 +6702,6 @@ async function openModal(id = null, dateHint = null) {
       // Default: add 1 empty registration link
       addRegistrationLink("NES", "");
     }
-
 
     // Populate Submit Links (array)
     if (ev.submitLinks && ev.submitLinks.length > 0) {
@@ -5698,7 +6719,9 @@ async function openModal(id = null, dateHint = null) {
     document.getElementById("programInfoContainer").classList.remove("hidden");
     const subcategorySelect = document.getElementById("subcategory");
     if (subcategorySelect) subcategorySelect.value = "";
-    const checkedCategory = document.querySelector('input[name="category"]:checked');
+    const checkedCategory = document.querySelector(
+      'input[name="category"]:checked',
+    );
     updateSubcategories(checkedCategory ? checkedCategory.value : null);
 
     programInfoContent = "";
@@ -5715,12 +6738,12 @@ async function openModal(id = null, dateHint = null) {
     if (!dateToUse) {
       dateToUse = toLocalISOString(today);
     }
-    
+
     document.getElementById("modalTitle").textContent = "New Program";
     const displayDateToUse = isoDateToDisplay(dateToUse);
     document.getElementById("startDate").value = displayDateToUse;
     document.getElementById("endDate").value = displayDateToUse;
-    
+
     document.getElementById("timeHour").value = "09";
     document.getElementById("timeMinute").value = "00";
     document.getElementById("timeAMPM").value = "AM";
@@ -5740,17 +6763,15 @@ async function openModal(id = null, dateHint = null) {
     // Clear and auto-add default links
     const regContainer = document.getElementById("registrationLinksContainer");
     const subContainer = document.getElementById("submitLinksContainer");
-    
+
     if (regContainer) regContainer.innerHTML = "";
     if (subContainer) subContainer.innerHTML = "";
-    
+
     // Auto-add 1 Registration Link (NES) and 1 Submit Link (Gform)
     addRegistrationLink("NES", "");
     addSubmitLink("Gform", "");
   }
 }
-
-
 
 function updateEndTime() {
   const startHour = parseInt(document.getElementById("timeHour").value) || 9;
@@ -5765,7 +6786,9 @@ function updateEndTime() {
     endAMPM = startAMPM === "AM" ? "PM" : "AM";
   }
 
-  document.getElementById("endTimeHour").value = endHour.toString().padStart(2, "0");
+  document.getElementById("endTimeHour").value = endHour
+    .toString()
+    .padStart(2, "0");
   document.getElementById("endTimeMinute").value = startMinute;
   document.getElementById("endTimeAMPM").value = endAMPM;
 }
@@ -5785,7 +6808,9 @@ function updateEndTime2() {
     endAMPM = startAMPM === "AM" ? "PM" : "AM";
   }
 
-  document.getElementById("endTime2Hour").value = endHour.toString().padStart(2, "0");
+  document.getElementById("endTime2Hour").value = endHour
+    .toString()
+    .padStart(2, "0");
   document.getElementById("endTime2Minute").value = startMinute;
   document.getElementById("endTime2AMPM").value = endAMPM;
 }
@@ -5814,13 +6839,17 @@ function clearProgramEditorPreviewUrls() {
 
 function syncProgramImageDraftFromState() {
   editorProgramExistingImages = cloneProgramImages(programExistingImages);
-  editorProgramNewImageFiles = Array.isArray(programNewImageFiles) ? programNewImageFiles.slice() : [];
+  editorProgramNewImageFiles = Array.isArray(programNewImageFiles)
+    ? programNewImageFiles.slice()
+    : [];
   editorProgramRemovedImages = cloneProgramImages(programRemovedImages);
 }
 
 function commitProgramImageDraftToState() {
   programExistingImages = cloneProgramImages(editorProgramExistingImages);
-  programNewImageFiles = Array.isArray(editorProgramNewImageFiles) ? editorProgramNewImageFiles.slice() : [];
+  programNewImageFiles = Array.isArray(editorProgramNewImageFiles)
+    ? editorProgramNewImageFiles.slice()
+    : [];
   programRemovedImages = cloneProgramImages(editorProgramRemovedImages);
 }
 
@@ -5890,7 +6919,9 @@ function addProgramImageFiles(files) {
     alert(PROGRAM_IMAGE_DISABLED_MSG);
     return 0;
   }
-  const imageFiles = validateProgramImageFiles(Array.isArray(files) ? files : []);
+  const imageFiles = validateProgramImageFiles(
+    Array.isArray(files) ? files : [],
+  );
   if (!imageFiles.length) return 0;
   editorProgramNewImageFiles = editorProgramNewImageFiles.concat(imageFiles);
   renderProgramImagePreviews();
@@ -5899,7 +6930,8 @@ function addProgramImageFiles(files) {
 
 function addProgramImageUrls(urls) {
   const result = { added: 0, skippedData: 0 };
-  if (!programImagesEnabled || !Array.isArray(urls) || !urls.length) return result;
+  if (!programImagesEnabled || !Array.isArray(urls) || !urls.length)
+    return result;
 
   urls.forEach((url) => {
     const cleanUrl = typeof url === "string" ? url.trim() : "";
@@ -5910,9 +6942,15 @@ function addProgramImageUrls(urls) {
     }
     if (!/^https?:\/\//i.test(cleanUrl)) return;
 
-    const exists = editorProgramExistingImages.some((img) => img.url === cleanUrl);
+    const exists = editorProgramExistingImages.some(
+      (img) => img.url === cleanUrl,
+    );
     if (!exists) {
-      editorProgramExistingImages.push({ url: cleanUrl, path: null, name: "pasted-image" });
+      editorProgramExistingImages.push({
+        url: cleanUrl,
+        path: null,
+        name: "pasted-image",
+      });
       result.added += 1;
     }
   });
@@ -5984,7 +7022,9 @@ function programRemoveExistingImage(index) {
   const removed = editorProgramExistingImages.splice(index, 1)[0];
   if (removed) {
     const alreadyQueued = editorProgramRemovedImages.some(
-      (img) => img.url === removed.url && (img.path || null) === (removed.path || null)
+      (img) =>
+        img.url === removed.url &&
+        (img.path || null) === (removed.path || null),
     );
     if (!alreadyQueued) {
       editorProgramRemovedImages.push(removed);
@@ -6010,7 +7050,8 @@ function programOpenEditorImage(type, index) {
     }
   });
 
-  let targetIndex = type === "existing" ? index : editorProgramExistingImages.length + index;
+  let targetIndex =
+    type === "existing" ? index : editorProgramExistingImages.length + index;
   if (targetIndex < 0) targetIndex = 0;
   if (!images.length) return;
   openProgramImageViewerWithList(images, targetIndex);
@@ -6056,7 +7097,9 @@ function programHandleEditorPaste(event, editor) {
       if (result.added > 0) {
         alert("Pasted image was moved to Program Images.");
       } else if (result.skippedData > 0) {
-        alert("Embedded base64 images are not allowed. Use image upload instead.");
+        alert(
+          "Embedded base64 images are not allowed. Use image upload instead.",
+        );
       }
     }
     autoConvertUrlsToLinks(editor);
@@ -6066,7 +7109,8 @@ function programHandleEditorPaste(event, editor) {
 function programHandleEditorDrop(event, editor) {
   const files = Array.from(event?.dataTransfer?.files || []);
   if (!files.length) return;
-  if (!files.some((file) => file?.type && file.type.startsWith("image/"))) return;
+  if (!files.some((file) => file?.type && file.type.startsWith("image/")))
+    return;
 
   event.preventDefault();
   const added = addProgramImageFiles(files);
@@ -6117,7 +7161,11 @@ function autoConvertUrlsToLinks(editor) {
     uniqueUrls.forEach((url) => {
       const cleanUrl = url.replace(/[.,;:)\]]+$/, "");
 
-      if (newContent.includes(`href="${cleanUrl}"`) || newContent.includes(`href="https://${cleanUrl}"`) || newContent.includes(`href="http://${cleanUrl}"`)) {
+      if (
+        newContent.includes(`href="${cleanUrl}"`) ||
+        newContent.includes(`href="https://${cleanUrl}"`) ||
+        newContent.includes(`href="http://${cleanUrl}"`)
+      ) {
         return;
       }
 
@@ -6173,7 +7221,9 @@ function changeFontSize(size) {
 
     document.getElementById("richTextEditor").focus();
   }
-  const select = document.querySelector('#richTextModal select[onchange*="changeFontSize"]');
+  const select = document.querySelector(
+    '#richTextModal select[onchange*="changeFontSize"]',
+  );
   if (select) select.value = "";
 }
 
@@ -6224,9 +7274,17 @@ function confirmInsertLink() {
     }
 
     if (displayText) {
-      document.execCommand("insertHTML", false, `<a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">${displayText}</a>`);
+      document.execCommand(
+        "insertHTML",
+        false,
+        `<a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">${displayText}</a>`,
+      );
     } else {
-      document.execCommand("insertHTML", false, `<a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">${url}</a>`);
+      document.execCommand(
+        "insertHTML",
+        false,
+        `<a href="${url}" target="_blank" style="color: #2563eb; text-decoration: underline;">${url}</a>`,
+      );
     }
 
     editor.focus();
@@ -6248,8 +7306,10 @@ function clearFormatting() {
 function confirmRemoveInfo() {
   const modal = document.getElementById("confirmModal");
   const panel = document.getElementById("confirmModalPanel");
-  document.querySelector("#confirmModal h3").textContent = "Remove Program Info?";
-  document.querySelector("#confirmModal p").textContent = "This will delete all program information.";
+  document.querySelector("#confirmModal h3").textContent =
+    "Remove Program Info?";
+  document.querySelector("#confirmModal p").textContent =
+    "This will delete all program information.";
   modal.classList.remove("hidden");
 
   setTimeout(() => {
@@ -6261,7 +7321,9 @@ function confirmRemoveInfo() {
 function removeInfoConfirmed() {
   programInfoContent = "";
   if (programExistingImages.length > 0) {
-    programRemovedImages = programRemovedImages.concat(cloneProgramImages(programExistingImages));
+    programRemovedImages = programRemovedImages.concat(
+      cloneProgramImages(programExistingImages),
+    );
   }
   programExistingImages = [];
   programNewImageFiles = [];
@@ -6274,13 +7336,17 @@ function saveRichText() {
   const editor = document.getElementById("richTextEditor");
   const nextContent = editor.innerHTML.trim();
   if (containsEmbeddedDataImage(nextContent)) {
-    alert("Embedded base64 images are not allowed in Program Info. Use Program Images upload instead.");
+    alert(
+      "Embedded base64 images are not allowed in Program Info. Use Program Images upload instead.",
+    );
     return;
   }
 
   const contentBytes = getUtf8ByteLength(nextContent);
   if (contentBytes > MAX_PROGRAM_INFO_BYTES) {
-    alert(`Program Info is too large (${Math.ceil(contentBytes / 1024)} KB). Maximum allowed is ${Math.ceil(MAX_PROGRAM_INFO_BYTES / 1024)} KB.`);
+    alert(
+      `Program Info is too large (${Math.ceil(contentBytes / 1024)} KB). Maximum allowed is ${Math.ceil(MAX_PROGRAM_INFO_BYTES / 1024)} KB.`,
+    );
     return;
   }
 
@@ -6303,14 +7369,20 @@ function updateSubcategories(categoryValue) {
   const subcategorySection = document.getElementById("subcategorySection");
   const subcategorySelect = document.getElementById("subcategory");
 
-  if (!categoryValue || !subcategories[categoryValue] || subcategories[categoryValue].length === 0) {
+  if (
+    !categoryValue ||
+    !subcategories[categoryValue] ||
+    subcategories[categoryValue].length === 0
+  ) {
     subcategorySection.classList.add("hidden");
-    subcategorySelect.innerHTML = '<option value="">-- Select Sub-Category --</option>';
+    subcategorySelect.innerHTML =
+      '<option value="">-- Select Sub-Category --</option>';
     return;
   }
 
   subcategorySection.classList.remove("hidden");
-  subcategorySelect.innerHTML = '<option value="">-- Select Sub-Category --</option>';
+  subcategorySelect.innerHTML =
+    '<option value="">-- Select Sub-Category --</option>';
 
   subcategories[categoryValue].forEach((sub) => {
     const option = document.createElement("option");
@@ -6325,12 +7397,13 @@ function buildProgramInfoMarkup(eventId, info, images) {
   const mapKey = String(eventId);
   eventImageMap[mapKey] = normalizedImages.map((img) => ({
     url: img.url,
-    name: img.name || "program-image"
+    name: img.name || "program-image",
   }));
 
-  const imagesHtml = normalizedImages.length > 0
-    ? `<div class="mb-2 flex flex-wrap gap-2 items-start justify-start">${normalizedImages.map((img, index) => `<button type="button" onclick="openEventCardImage('${mapKey}', ${index})" class="block cursor-pointer"><div class="h-[60px] max-w-full bg-white border border-slate-200 rounded overflow-hidden hover:opacity-95 transition-opacity flex items-start justify-start cursor-pointer"><img src="${escapeAttribute(img.url)}" alt="Program image" class="h-[60px] w-auto max-w-full object-contain object-left-top cursor-pointer" loading="lazy" /></div></button>`).join("")}</div>`
-    : "";
+  const imagesHtml =
+    normalizedImages.length > 0
+      ? `<div class="mb-2 flex flex-wrap gap-2 items-start justify-start">${normalizedImages.map((img, index) => `<button type="button" onclick="openEventCardImage('${mapKey}', ${index})" class="block cursor-pointer"><div class="h-[60px] max-w-full bg-white border border-slate-200 rounded overflow-hidden hover:opacity-95 transition-opacity flex items-start justify-start cursor-pointer"><img src="${escapeAttribute(img.url)}" alt="Program image" class="h-[60px] w-auto max-w-full object-contain object-left-top cursor-pointer" loading="lazy" /></div></button>`).join("")}</div>`
+      : "";
 
   const infoHtml = info
     ? sanitizeHTMLWithLinks(info)
@@ -6372,10 +7445,12 @@ function updateProgramImageViewer() {
   currentProgramImageName = current.name || "program-image";
   img.src = currentProgramImageUrl;
   img.alt = currentProgramImageName;
-  if (counter) counter.textContent = `${currentProgramImageIndex + 1} / ${currentProgramImageList.length}`;
+  if (counter)
+    counter.textContent = `${currentProgramImageIndex + 1} / ${currentProgramImageList.length}`;
 
   const isPrevDisabled = currentProgramImageIndex <= 0;
-  const isNextDisabled = currentProgramImageIndex >= currentProgramImageList.length - 1;
+  const isNextDisabled =
+    currentProgramImageIndex >= currentProgramImageList.length - 1;
 
   if (prevBtn) {
     prevBtn.disabled = isPrevDisabled;
@@ -6437,7 +7512,9 @@ async function copyProgramImage() {
     if (navigator.clipboard && window.ClipboardItem) {
       const response = await fetch(currentProgramImageUrl);
       const blob = await response.blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
       alert("Image copied to clipboard.");
       return;
     }
@@ -6494,7 +7571,9 @@ async function uploadProgramImages(eventId, files) {
       .from(PROGRAM_IMAGE_BUCKET)
       .upload(path, file, { contentType: file.type, upsert: false });
     if (error) throw error;
-    const { data } = supabaseClient.storage.from(PROGRAM_IMAGE_BUCKET).getPublicUrl(path);
+    const { data } = supabaseClient.storage
+      .from(PROGRAM_IMAGE_BUCKET)
+      .getPublicUrl(path);
     if (data?.publicUrl) {
       uploaded.push({ url: data.publicUrl, path: path, name: file.name });
     }
@@ -6503,7 +7582,9 @@ async function uploadProgramImages(eventId, files) {
 }
 
 async function deleteProgramImages(images) {
-  const paths = normalizeProgramImages(images).map((img) => img.path).filter(Boolean);
+  const paths = normalizeProgramImages(images)
+    .map((img) => img.path)
+    .filter(Boolean);
   if (!paths.length) return;
   try {
     await supabaseClient.storage.from(PROGRAM_IMAGE_BUCKET).remove(paths);
@@ -6523,28 +7604,48 @@ async function toggleEventInfo(eventId) {
   }
 
   const eventKey = String(eventId);
-  const eventData = eventListLookup.get(eventKey) || events.find((eventItem) => String(eventItem.id) === eventKey);
+  const eventData =
+    eventListLookup.get(eventKey) ||
+    events.find((eventItem) => String(eventItem.id) === eventKey);
   const isExternalEvent = Boolean(eventData?.isExternal);
-  const needsDetailsFetch = !isExternalEvent && (!eventData
-    || typeof eventData.info !== "string"
-    || (programImagesEnabled && !Array.isArray(eventData.images)));
+  const needsDetailsFetch =
+    !isExternalEvent &&
+    (!eventData ||
+      typeof eventData.info !== "string" ||
+      (programImagesEnabled && !Array.isArray(eventData.images)));
 
   if (needsDetailsFetch) {
-    container.innerHTML = '<span class="text-[9px] text-slate-400 italic">Loading program info...</span>';
+    container.innerHTML =
+      '<span class="text-[9px] text-slate-400 italic">Loading program info...</span>';
     container.classList.remove("hidden");
     toggleChevron(icon, true);
     try {
       const details = await loadEventDetailsById(eventId);
-      container.innerHTML = buildProgramInfoMarkup(eventId, details.info, details.images);
-      setProgramInfoIndicatorColor(eventId, hasProgramInfoValue(details.info, details.images, false));
+      container.innerHTML = buildProgramInfoMarkup(
+        eventId,
+        details.info,
+        details.images,
+      );
+      setProgramInfoIndicatorColor(
+        eventId,
+        hasProgramInfoValue(details.info, details.images, false),
+      );
     } catch (error) {
       console.error("Failed to load program info:", error);
-      container.innerHTML = '<span class="text-[9px] text-red-500 italic">Failed to load program info.</span>';
+      container.innerHTML =
+        '<span class="text-[9px] text-red-500 italic">Failed to load program info.</span>';
     }
   } else {
     container.classList.remove("hidden");
-    container.innerHTML = buildProgramInfoMarkup(eventId, eventData.info || "", eventData.images);
-    setProgramInfoIndicatorColor(eventId, hasProgramInfoValue(eventData.info, eventData.images, false));
+    container.innerHTML = buildProgramInfoMarkup(
+      eventId,
+      eventData.info || "",
+      eventData.images,
+    );
+    setProgramInfoIndicatorColor(
+      eventId,
+      hasProgramInfoValue(eventData.info, eventData.images, false),
+    );
     toggleChevron(icon, true);
   }
 }
@@ -6571,44 +7672,44 @@ function closeModal() {
 
 // Show category validation error with red blinking outline
 function showCategoryError() {
-  const categoryGrid = document.getElementById('categoryGrid');
-  const errorText = document.getElementById('categoryErrorText');
-  
+  const categoryGrid = document.getElementById("categoryGrid");
+  const errorText = document.getElementById("categoryErrorText");
+
   if (categoryGrid) {
     // Add blinking red outline class
-    categoryGrid.classList.add('category-error');
-    
+    categoryGrid.classList.add("category-error");
+
     // Scroll to category section smoothly
-    categoryGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
+    categoryGrid.scrollIntoView({ behavior: "smooth", block: "center" });
+
     // Remove animation class after it completes (0.8s for 2 blinks)
     setTimeout(() => {
-      categoryGrid.classList.remove('category-error');
+      categoryGrid.classList.remove("category-error");
     }, 800);
   }
-  
+
   if (errorText) {
     // Show error text
-    errorText.classList.remove('hidden');
-    
+    errorText.classList.remove("hidden");
+
     // Hide error text after 5 seconds
     setTimeout(() => {
-      errorText.classList.add('hidden');
+      errorText.classList.add("hidden");
     }, 5000);
   }
 }
 
 // Hide category error
 function hideCategoryError() {
-  const categoryGrid = document.getElementById('categoryGrid');
-  const errorText = document.getElementById('categoryErrorText');
-  
+  const categoryGrid = document.getElementById("categoryGrid");
+  const errorText = document.getElementById("categoryErrorText");
+
   if (categoryGrid) {
-    categoryGrid.classList.remove('category-error');
+    categoryGrid.classList.remove("category-error");
   }
-  
+
   if (errorText) {
-    errorText.classList.add('hidden');
+    errorText.classList.add("hidden");
   }
 }
 
@@ -6666,7 +7767,9 @@ async function saveEvent() {
 
   // Get Registration Links (multiple)
 
-  const registrationLinkRows = document.querySelectorAll("#registrationLinksContainer > div");
+  const registrationLinkRows = document.querySelectorAll(
+    "#registrationLinksContainer > div",
+  );
   const registrationLinks = [];
   registrationLinkRows.forEach((row) => {
     const p = row.querySelector(".reg-link-platform").value.trim();
@@ -6680,7 +7783,9 @@ async function saveEvent() {
   });
 
   // Get Submit Links (multiple)
-  const submitLinkRows = document.querySelectorAll("#submitLinksContainer > div");
+  const submitLinkRows = document.querySelectorAll(
+    "#submitLinksContainer > div",
+  );
   const submitLinks = [];
   submitLinkRows.forEach((row) => {
     const p = row.querySelector(".sub-link-platform").value.trim();
@@ -6692,7 +7797,6 @@ async function saveEvent() {
       submitLinks.push({ platform: p || "Gform", url: u });
     }
   });
-
 
   // Validation with visual feedback
   if (!startDateInputValue || !title) {
@@ -6709,12 +7813,12 @@ async function saveEvent() {
     alert("End Date must be in dd/mm/yyyy format.");
     return;
   }
-  
+
   if (!category) {
     showCategoryError();
     return;
   }
-  
+
   if (end < start) {
     alert("End Date cannot be before Start Date.");
     return;
@@ -6725,13 +7829,17 @@ async function saveEvent() {
 
   const infoChanged = programInfoVal !== originalProgramInfoContent;
   if (infoChanged && containsEmbeddedDataImage(programInfoVal)) {
-    alert("Embedded base64 images are not allowed in Program Info. Use Program Images upload instead.");
+    alert(
+      "Embedded base64 images are not allowed in Program Info. Use Program Images upload instead.",
+    );
     return;
   }
 
   const infoBytes = getUtf8ByteLength(programInfoVal);
   if (infoChanged && infoBytes > MAX_PROGRAM_INFO_BYTES) {
-    alert(`Program Info is too large (${Math.ceil(infoBytes / 1024)} KB). Maximum allowed is ${Math.ceil(MAX_PROGRAM_INFO_BYTES / 1024)} KB.`);
+    alert(
+      `Program Info is too large (${Math.ceil(infoBytes / 1024)} KB). Maximum allowed is ${Math.ceil(MAX_PROGRAM_INFO_BYTES / 1024)} KB.`,
+    );
     return;
   }
 
@@ -6750,9 +7858,10 @@ async function saveEvent() {
     submitLinks: submitLinks,
   };
 
-  const imagesChanged = !areProgramImagesEqual(programExistingImages, originalProgramImages)
-    || programNewImageFiles.length > 0
-    || programRemovedImages.length > 0;
+  const imagesChanged =
+    !areProgramImagesEqual(programExistingImages, originalProgramImages) ||
+    programNewImageFiles.length > 0 ||
+    programRemovedImages.length > 0;
 
   let uploadedImages = [];
   let savedEvent = { ...eventData };
@@ -6776,7 +7885,11 @@ async function saveEvent() {
         .update(updatePayload)
         .eq("id", id);
 
-      if (updateError && isMissingColumnError(updateError) && programImagesEnabled) {
+      if (
+        updateError &&
+        isMissingColumnError(updateError) &&
+        programImagesEnabled
+      ) {
         imagesColumnMissing = true;
         setProgramImagesEnabled(false);
         programImagesCapabilityChecked = true;
@@ -6811,7 +7924,10 @@ async function saveEvent() {
       if (programImagesEnabled && imagesChanged) {
         let finalImages = cloneProgramImages(programExistingImages);
         if (programNewImageFiles.length > 0) {
-          uploadedImages = await uploadProgramImages(eventData.id, programNewImageFiles);
+          uploadedImages = await uploadProgramImages(
+            eventData.id,
+            programNewImageFiles,
+          );
           finalImages = finalImages.concat(uploadedImages);
         }
 
@@ -6866,7 +7982,7 @@ async function saveEvent() {
   eventDetailsCache.set(savedEvent.id, {
     info: savedEvent.info || "",
     images: cloneProgramImages(savedEvent.images),
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 
   originalProgramInfoContent = savedEvent.info || "";
@@ -6882,7 +7998,9 @@ async function saveEvent() {
   renderEventList();
 
   if (imagesColumnMissing) {
-    alert("Program saved, but images were skipped because the `events.images` column is missing.");
+    alert(
+      "Program saved, but images were skipped because the `events.images` column is missing.",
+    );
   }
 }
 
@@ -6899,7 +8017,9 @@ function deleteEvent(id) {
 }
 
 function openHolidaySettings() {
-  tempPublicHolidays = JSON.parse(JSON.stringify(siteSettings.publicHolidays || {}));
+  tempPublicHolidays = JSON.parse(
+    JSON.stringify(siteSettings.publicHolidays || {}),
+  );
   renderHolidayList();
   showView("holidaySettingsView");
 }
@@ -6938,12 +8058,17 @@ function renderHolidayList() {
     const isDefault = holidayData.isDefault;
 
     const div = document.createElement("div");
-    div.className = "flex items-center justify-between px-2 py-1.5 rounded border border-slate-100";
+    div.className =
+      "flex items-center justify-between px-2 py-1.5 rounded border border-slate-100";
     div.style.backgroundColor = isDefault ? "#f8fafc" : "#f0fdf4";
     div.id = `holiday-${date}`;
 
     const dateObj = new Date(date);
-    const dateDisplay = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    const dateDisplay = dateObj.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
     const badge = isDefault
       ? '<span class="text-[8px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded ml-2">Default</span>'
@@ -6995,7 +8120,9 @@ function saveHolidaySettings() {
 }
 
 function openSchoolHolidaySettings() {
-  tempSchoolHolidays = JSON.parse(JSON.stringify(siteSettings.schoolHolidays || {}));
+  tempSchoolHolidays = JSON.parse(
+    JSON.stringify(siteSettings.schoolHolidays || {}),
+  );
   renderSchoolHolidayList();
   showView("schoolHolidaySettingsView");
 }
@@ -7059,7 +8186,8 @@ function renderSchoolHolidayList() {
     const isHidden = holidayData.isHidden;
 
     const div = document.createElement("div");
-    div.className = "flex items-center justify-between px-2 py-1.5 rounded border border-amber-100";
+    div.className =
+      "flex items-center justify-between px-2 py-1.5 rounded border border-amber-100";
     if (isHidden) {
       div.style.backgroundColor = "#fef2f2";
     } else if (isDefault) {
@@ -7074,23 +8202,39 @@ function renderSchoolHolidayList() {
 
     let dateDisplay;
     if (holidayData.start === holidayData.end) {
-      dateDisplay = startDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      dateDisplay = startDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
     } else {
-      const startStr = startDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-      const endStr = endDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      const startStr = startDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      });
+      const endStr = endDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
       dateDisplay = `${startStr} - ${endStr}`;
     }
 
     let badge;
     if (isHidden) {
-      badge = '<span class="text-[8px] bg-red-200 text-red-700 px-1.5 py-0.5 rounded ml-2">Hidden</span>';
+      badge =
+        '<span class="text-[8px] bg-red-200 text-red-700 px-1.5 py-0.5 rounded ml-2">Hidden</span>';
     } else if (isDefault) {
-      badge = '<span class="text-[8px] bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded ml-2">Default</span>';
+      badge =
+        '<span class="text-[8px] bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded ml-2">Default</span>';
     } else {
-      badge = '<span class="text-[8px] bg-green-200 text-green-700 px-1.5 py-0.5 rounded ml-2">Custom</span>';
+      badge =
+        '<span class="text-[8px] bg-green-200 text-green-700 px-1.5 py-0.5 rounded ml-2">Custom</span>';
     }
 
-    const editButton = isHidden ? "" : `<button onclick="editSchoolHoliday('${key}', ${isDefault})" class="text-amber-400 hover:text-blue-500 transition-colors" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>`;
+    const editButton = isHidden
+      ? ""
+      : `<button onclick="editSchoolHoliday('${key}', ${isDefault})" class="text-amber-400 hover:text-blue-500 transition-colors" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>`;
 
     div.innerHTML = `
       <div class="flex-1">
@@ -7117,7 +8261,8 @@ function addSchoolHoliday() {
   if (!name) return alert("Please enter a holiday name.");
   if (!startDate) return alert("Please select a start date.");
   if (!endDate) return alert("Please select an end date.");
-  if (endDate < startDate) return alert("End date cannot be before start date.");
+  if (endDate < startDate)
+    return alert("End date cannot be before start date.");
 
   tempSchoolHolidays[startDate] = {
     name: name,
@@ -7147,7 +8292,9 @@ function editSchoolHoliday(key, isDefault) {
   document.getElementById("schoolHolidayStart").value = holiday.start;
   document.getElementById("schoolHolidayEnd").value = holiday.end;
 
-  const addBtn = document.querySelector("#schoolHolidaySettingsView button[onclick='addSchoolHoliday()']");
+  const addBtn = document.querySelector(
+    "#schoolHolidaySettingsView button[onclick='addSchoolHoliday()']",
+  );
   addBtn.textContent = "Update";
   addBtn.onclick = function () {
     updateSchoolHoliday(key, isDefault);
@@ -7157,7 +8304,8 @@ function editSchoolHoliday(key, isDefault) {
   if (!cancelBtn) {
     cancelBtn = document.createElement("button");
     cancelBtn.id = "cancelEditSchoolHoliday";
-    cancelBtn.className = "w-full py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold rounded transition-colors mt-2";
+    cancelBtn.className =
+      "w-full py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-bold rounded transition-colors mt-2";
     cancelBtn.textContent = "Cancel";
     cancelBtn.onclick = resetSchoolHolidayForm;
     addBtn.parentNode.insertBefore(cancelBtn, addBtn.nextSibling);
@@ -7173,10 +8321,15 @@ function updateSchoolHoliday(originalKey, isDefault) {
   if (!name) return alert("Please enter a holiday name.");
   if (!startDate) return alert("Please select a start date.");
   if (!endDate) return alert("Please select an end date.");
-  if (endDate < startDate) return alert("End date cannot be before start date.");
+  if (endDate < startDate)
+    return alert("End date cannot be before start date.");
 
   if (isDefault) {
-    tempSchoolHolidays[originalKey] = { _deleted: true, start: originalKey, end: defaultSchoolHolidays[originalKey]?.end };
+    tempSchoolHolidays[originalKey] = {
+      _deleted: true,
+      start: originalKey,
+      end: defaultSchoolHolidays[originalKey]?.end,
+    };
     tempSchoolHolidays[startDate] = {
       name: name,
       start: startDate,
@@ -7202,7 +8355,9 @@ function resetSchoolHolidayForm() {
   document.getElementById("schoolHolidayStart").value = "";
   document.getElementById("schoolHolidayEnd").value = "";
 
-  const addBtn = document.querySelector("#schoolHolidaySettingsView button[onclick^='updateSchoolHoliday']");
+  const addBtn = document.querySelector(
+    "#schoolHolidaySettingsView button[onclick^='updateSchoolHoliday']",
+  );
   if (addBtn) {
     addBtn.textContent = "Add";
     addBtn.onclick = addSchoolHoliday;
@@ -7216,7 +8371,11 @@ function resetSchoolHolidayForm() {
 
 function deleteSchoolHoliday(key, isDefault) {
   if (isDefault) {
-    tempSchoolHolidays[key] = { _deleted: true, start: key, end: defaultSchoolHolidays[key]?.end };
+    tempSchoolHolidays[key] = {
+      _deleted: true,
+      start: key,
+      end: defaultSchoolHolidays[key]?.end,
+    };
   } else {
     delete tempSchoolHolidays[key];
   }
@@ -7232,32 +8391,36 @@ function saveSchoolHolidaySettings() {
 
 // NADI4U API Functions
 function openNADI4USettings() {
-  document.getElementById('settingsMenuView').classList.add('hidden');
-  document.getElementById('nadi4uSettingsView').classList.remove('hidden');
-  document.getElementById('nadi4uSettingsView').classList.add('flex');
+  document.getElementById("settingsMenuView").classList.add("hidden");
+  document.getElementById("nadi4uSettingsView").classList.remove("hidden");
+  document.getElementById("nadi4uSettingsView").classList.add("flex");
 
   // Check if logged in
   updateNADI4UView();
 }
 
 function parseNadi4uSettingsFromStorage() {
-  const raw = getNadi4uStorageItem('nadi4uSettings');
+  const raw = getNadi4uStorageItem("nadi4uSettings");
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch (error) {
     return null;
   }
 }
 
 function persistNadi4uSettings(settings) {
-  setNadi4uStorageItem('nadi4uSettings', settings || {});
+  setNadi4uStorageItem("nadi4uSettings", settings || {});
 }
 
 function buildAutoNadi4uSettings(existingSettings = {}) {
-  const base = existingSettings && typeof existingSettings === 'object' ? existingSettings : {};
-  const apiKey = (window.NADI4U_API && NADI4U_API.defaultApiKey) || base.apiKey || '';
+  const base =
+    existingSettings && typeof existingSettings === "object"
+      ? existingSettings
+      : {};
+  const apiKey =
+    (window.NADI4U_API && NADI4U_API.defaultApiKey) || base.apiKey || "";
 
   return {
     ...base,
@@ -7267,7 +8430,7 @@ function buildAutoNadi4uSettings(existingSettings = {}) {
     templateRole: NADI4U_HEADER_ROLE_ASSISTANT,
     templateSiteName: NADI4U_AUTO_LOGIN_SITE_NAME,
     templateSiteSlug: NADI4U_AUTO_LOGIN_SITE_SLUG,
-    lastLoginSource: NADI4U_AUTO_LOGIN_SOURCE
+    lastLoginSource: NADI4U_AUTO_LOGIN_SOURCE,
   };
 }
 
@@ -7277,9 +8440,16 @@ function persistAutoNadi4uSettings() {
   persistNadi4uSettings(nextSettings);
 
   if (window.NADI4U_API) {
-    NADI4U_API.configure(nextSettings.apiKey || NADI4U_API.defaultApiKey, nextSettings.token || '');
-    if (typeof NADI4U_API.setCredentials === 'function') {
-      NADI4U_API.setCredentials(nextSettings.email, nextSettings.password, false);
+    NADI4U_API.configure(
+      nextSettings.apiKey || NADI4U_API.defaultApiKey,
+      nextSettings.token || "",
+    );
+    if (typeof NADI4U_API.setCredentials === "function") {
+      NADI4U_API.setCredentials(
+        nextSettings.email,
+        nextSettings.password,
+        false,
+      );
     }
   }
 
@@ -7293,18 +8463,26 @@ async function autoLoginAndSyncNadi4uOnLoad() {
   nadi4uAutoLoginSyncPromise = (async () => {
     try {
       persistAutoNadi4uSettings();
-      const loginResult = await NADI4U_API.login(NADI4U_AUTO_LOGIN_EMAIL, NADI4U_AUTO_LOGIN_PASSWORD, { rememberCredentials: true });
+      const loginResult = await NADI4U_API.login(
+        NADI4U_AUTO_LOGIN_EMAIL,
+        NADI4U_AUTO_LOGIN_PASSWORD,
+        { rememberCredentials: true },
+      );
 
-      const mergedSettings = buildAutoNadi4uSettings(parseNadi4uSettingsFromStorage() || {});
+      const mergedSettings = buildAutoNadi4uSettings(
+        parseNadi4uSettingsFromStorage() || {},
+      );
       if (loginResult?.access_token) {
         mergedSettings.token = loginResult.access_token;
       }
       mergedSettings.userEmail = NADI4U_AUTO_LOGIN_EMAIL;
       try {
-        const raw = localStorage.getItem('leave_user');
+        const raw = localStorage.getItem("leave_user");
         if (raw) {
           const leaveUser = JSON.parse(raw);
-          const mappedId = resolveNumericSiteId(leaveUser?.site_name) || resolveNumericSiteId(leaveUser?.site_id);
+          const mappedId =
+            resolveNumericSiteId(leaveUser?.site_name) ||
+            resolveNumericSiteId(leaveUser?.site_id);
           if (mappedId) mergedSettings.templateSiteId = mappedId;
         }
       } catch (_) {}
@@ -7315,9 +8493,9 @@ async function autoLoginAndSyncNadi4uOnLoad() {
       return syncResult || null;
     } catch (error) {
       if (window.DEBUG_MODE) {
-        console.error('Auto NADI4U login/sync failed:', error);
+        console.error("Auto NADI4U login/sync failed:", error);
       }
-      showNADI4UStatus(`Auto sync failed: ${error.message}`, 'error');
+      showNADI4UStatus(`Auto sync failed: ${error.message}`, "error");
       return null;
     } finally {
       nadi4uAutoLoginSyncPromise = null;
@@ -7328,27 +8506,27 @@ async function autoLoginAndSyncNadi4uOnLoad() {
 }
 
 function closeHeaderLoginMenu() {
-  const dropdown = document.getElementById('logoutDropdown');
+  const dropdown = document.getElementById("logoutDropdown");
   if (dropdown) {
-    dropdown.classList.add('hidden');
+    dropdown.classList.add("hidden");
   }
-  const loginBtn = document.getElementById('loginBtn');
+  const loginBtn = document.getElementById("loginBtn");
   if (loginBtn) {
-    loginBtn.setAttribute('aria-expanded', 'false');
+    loginBtn.setAttribute("aria-expanded", "false");
   }
 }
 
 function parseLeaveUserFromStorage() {
   let raw = null;
   try {
-    raw = appStorage?.getItem ? appStorage.getItem('leave_user') : null;
+    raw = appStorage?.getItem ? appStorage.getItem("leave_user") : null;
   } catch (error) {
     raw = null;
   }
 
   if (!raw) {
     try {
-      raw = localStorage.getItem('leave_user');
+      raw = localStorage.getItem("leave_user");
     } catch (error) {
       raw = null;
     }
@@ -7357,39 +8535,46 @@ function parseLeaveUserFromStorage() {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch (error) {
     return null;
   }
 }
 
 function mapLeaveRoleToNadi4uRole(leaveRole) {
-  const normalized = String(leaveRole || '').trim().toLowerCase();
-  if (!normalized) return '';
-  if (normalized === 'manager') return NADI4U_HEADER_ROLE_MANAGER;
-  if (normalized === 'assistant manager') return NADI4U_HEADER_ROLE_ASSISTANT;
-  return '';
+  const normalized = String(leaveRole || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "manager") return NADI4U_HEADER_ROLE_MANAGER;
+  if (normalized === "assistant manager") return NADI4U_HEADER_ROLE_ASSISTANT;
+  return "";
 }
 
 function toNadiSiteSlug(siteName) {
-  const raw = String(siteName || '').trim().toLowerCase();
-  if (!raw) return '';
-  const withoutPrefix = raw.replace(/^nadi\s+/, '');
+  const raw = String(siteName || "")
+    .trim()
+    .toLowerCase();
+  if (!raw) return "";
+  const withoutPrefix = raw.replace(/^nadi\s+/, "");
   return withoutPrefix
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/_/g, '-')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function buildNadi4uTemplateEmail(role, siteSlug) {
-  const safeSlug = String(siteSlug || '').trim().toLowerCase();
-  if (!safeSlug) return '';
-  const safeRole = role === NADI4U_HEADER_ROLE_ASSISTANT
-    ? NADI4U_HEADER_ROLE_ASSISTANT
-    : NADI4U_HEADER_ROLE_MANAGER;
+  const safeSlug = String(siteSlug || "")
+    .trim()
+    .toLowerCase();
+  if (!safeSlug) return "";
+  const safeRole =
+    role === NADI4U_HEADER_ROLE_ASSISTANT
+      ? NADI4U_HEADER_ROLE_ASSISTANT
+      : NADI4U_HEADER_ROLE_MANAGER;
   return `${safeRole}@${safeSlug}.nadi.my`;
 }
 
@@ -7398,7 +8583,7 @@ function getNadi4uTemplateFromLeaveSession() {
   if (!leaveUser) return null;
 
   const role = mapLeaveRoleToNadi4uRole(leaveUser.role);
-  const siteName = String(leaveUser.site_name || '').trim();
+  const siteName = String(leaveUser.site_name || "").trim();
   const siteSlug = toNadiSiteSlug(siteName);
   if (!role || !siteSlug) return null;
 
@@ -7406,28 +8591,31 @@ function getNadi4uTemplateFromLeaveSession() {
     role,
     siteName,
     siteSlug,
-    siteId: leaveUser.site_id != null ? String(leaveUser.site_id) : '',
-    email: buildNadi4uTemplateEmail(role, siteSlug)
+    siteId: leaveUser.site_id != null ? String(leaveUser.site_id) : "",
+    email: buildNadi4uTemplateEmail(role, siteSlug),
   };
 }
 
-function showNadi4uHeaderInlineStatus(message, type = 'info') {
-  const statusEl = document.getElementById('nadi4uHeaderInlineStatus');
+function showNadi4uHeaderInlineStatus(message, type = "info") {
+  const statusEl = document.getElementById("nadi4uHeaderInlineStatus");
   if (!statusEl) return;
 
   if (!message) {
-    statusEl.classList.add('hidden');
-    statusEl.textContent = '';
+    statusEl.classList.add("hidden");
+    statusEl.textContent = "";
     return;
   }
 
-  statusEl.classList.remove('hidden');
-  if (type === 'error') {
-    statusEl.className = 'px-2 py-1.5 rounded text-[10px] bg-red-100 text-red-700 border border-red-200';
-  } else if (type === 'success') {
-    statusEl.className = 'px-2 py-1.5 rounded text-[10px] bg-green-100 text-green-700 border border-green-200';
+  statusEl.classList.remove("hidden");
+  if (type === "error") {
+    statusEl.className =
+      "px-2 py-1.5 rounded text-[10px] bg-red-100 text-red-700 border border-red-200";
+  } else if (type === "success") {
+    statusEl.className =
+      "px-2 py-1.5 rounded text-[10px] bg-green-100 text-green-700 border border-green-200";
   } else {
-    statusEl.className = 'px-2 py-1.5 rounded text-[10px] bg-blue-100 text-blue-700 border border-blue-200';
+    statusEl.className =
+      "px-2 py-1.5 rounded text-[10px] bg-blue-100 text-blue-700 border border-blue-200";
   }
   statusEl.textContent = message;
 }
@@ -7448,11 +8636,11 @@ function persistNadi4uHeaderTemplateState() {
 }
 
 function refreshNadi4uHeaderEmailPreview(persistSelection = true) {
-  const previewInput = document.getElementById('nadi4uHeaderEmailPreview');
-  if (!previewInput) return '';
+  const previewInput = document.getElementById("nadi4uHeaderEmailPreview");
+  if (!previewInput) return "";
 
   const template = getNadi4uTemplateFromLeaveSession();
-  const email = template?.email || '';
+  const email = template?.email || "";
   previewInput.value = email;
 
   if (persistSelection) {
@@ -7469,13 +8657,13 @@ function hydrateNadi4uHeaderFormFromSettings() {
 
 function updateNadi4uHeaderBadge() {
   const settings = parseNadi4uSettingsFromStorage() || {};
-  const badge = document.getElementById('nadi4uHeaderBadgeDot');
+  const badge = document.getElementById("nadi4uHeaderBadgeDot");
   if (!badge) return;
 
   if (settings?.token) {
-    badge.classList.remove('hidden');
+    badge.classList.remove("hidden");
   } else {
-    badge.classList.add('hidden');
+    badge.classList.add("hidden");
   }
 }
 
@@ -7485,25 +8673,29 @@ function refreshNadi4uHeaderMenuState() {
   const template = getNadi4uTemplateFromLeaveSession();
   refreshNadi4uHeaderEmailPreview(false);
 
-  const stateEl = document.getElementById('nadi4uHeaderState');
-  const logoutBtn = document.getElementById('nadi4uHeaderLogoutBtn');
+  const stateEl = document.getElementById("nadi4uHeaderState");
+  const logoutBtn = document.getElementById("nadi4uHeaderLogoutBtn");
 
   if (stateEl) {
     if (isConnected) {
-      stateEl.textContent = 'Connected to NES';
-      stateEl.className = 'text-[10px] text-green-700 mt-1';
+      stateEl.textContent = "Connected to NES";
+      stateEl.className = "text-[10px] text-green-700 mt-1";
     } else if (template) {
-      const roleLabel = template.role === NADI4U_HEADER_ROLE_ASSISTANT ? 'Assistant Manager' : 'Manager';
+      const roleLabel =
+        template.role === NADI4U_HEADER_ROLE_ASSISTANT
+          ? "Assistant Manager"
+          : "Manager";
       stateEl.textContent = `Detected from Leave: ${roleLabel} - ${template.siteName}`;
-      stateEl.className = 'text-[10px] text-cyan-800 mt-1';
+      stateEl.className = "text-[10px] text-cyan-800 mt-1";
     } else {
-      stateEl.textContent = 'Login Leave Access as Manager or Assistant Manager first';
-      stateEl.className = 'text-[10px] text-cyan-800 mt-1';
+      stateEl.textContent =
+        "Login Leave Access as Manager or Assistant Manager first";
+      stateEl.className = "text-[10px] text-cyan-800 mt-1";
     }
   }
 
   if (logoutBtn) {
-    logoutBtn.classList.toggle('hidden', !isConnected);
+    logoutBtn.classList.toggle("hidden", !isConnected);
   }
 
   updateNadi4uHeaderBadge();
@@ -7522,18 +8714,21 @@ function openNadi4uSettingsFromHeaderMenu() {
 
 async function ensureNADI4USession(settings, options = {}) {
   if (!window.NADI4U_API) {
-    throw new Error('NADI4U API is not available');
+    throw new Error("NADI4U API is not available");
   }
 
   const allowBackgroundLogin = options.allowBackgroundLogin !== false;
-  const activeSettings = settings && typeof settings === 'object' ? settings : {};
+  const activeSettings =
+    settings && typeof settings === "object" ? settings : {};
   const apiKey = activeSettings.apiKey || NADI4U_API.defaultApiKey;
-  const token = activeSettings.token || '';
-  const email = typeof activeSettings.email === 'string' ? activeSettings.email.trim() : '';
-  const password = typeof activeSettings.password === 'string' ? activeSettings.password : '';
+  const token = activeSettings.token || "";
+  const email =
+    typeof activeSettings.email === "string" ? activeSettings.email.trim() : "";
+  const password =
+    typeof activeSettings.password === "string" ? activeSettings.password : "";
 
   NADI4U_API.configure(apiKey, token);
-  if (typeof NADI4U_API.setCredentials === 'function' && email && password) {
+  if (typeof NADI4U_API.setCredentials === "function" && email && password) {
     NADI4U_API.setCredentials(email, password, false);
   }
 
@@ -7546,52 +8741,56 @@ async function ensureNADI4USession(settings, options = {}) {
     return parseNadi4uSettingsFromStorage() || activeSettings;
   }
 
-  throw new Error('Please login with email & password first.');
+  throw new Error("Please login with email & password first.");
 }
 
 function updateNADI4UView() {
   const settings = parseNadi4uSettingsFromStorage();
-  const loginView = document.getElementById('nadi4uLoginView');
-  const loggedInView = document.getElementById('nadi4uLoggedInView');
-  const emailInput = document.getElementById('nadi4uEmail');
-  const passwordInput = document.getElementById('nadi4uPassword');
+  const loginView = document.getElementById("nadi4uLoginView");
+  const loggedInView = document.getElementById("nadi4uLoggedInView");
+  const emailInput = document.getElementById("nadi4uEmail");
+  const passwordInput = document.getElementById("nadi4uPassword");
 
   if (emailInput) {
-    emailInput.value = settings?.email || '';
+    emailInput.value = settings?.email || "";
   }
 
   if (passwordInput) {
-    passwordInput.value = settings?.password || '';
+    passwordInput.value = settings?.password || "";
   }
 
   if (settings && settings.token && loginView && loggedInView) {
     // Logged in or have manual credentials
-    loginView.classList.add('hidden');
-    loggedInView.classList.remove('hidden');
+    loginView.classList.add("hidden");
+    loggedInView.classList.remove("hidden");
 
     // Show user email if available
-    const userEmailEl = document.getElementById('nadi4uUserEmail');
+    const userEmailEl = document.getElementById("nadi4uUserEmail");
     if (userEmailEl) {
       if (settings.userEmail) {
         userEmailEl.textContent = settings.userEmail;
       } else if (settings.email) {
         userEmailEl.textContent = settings.email;
       } else {
-        userEmailEl.textContent = '';
+        userEmailEl.textContent = "";
       }
     }
 
     // Configure API
     if (window.NADI4U_API) {
       NADI4U_API.configure(settings.apiKey, settings.token);
-      if (typeof NADI4U_API.setCredentials === 'function' && settings.email && settings.password) {
+      if (
+        typeof NADI4U_API.setCredentials === "function" &&
+        settings.email &&
+        settings.password
+      ) {
         NADI4U_API.setCredentials(settings.email, settings.password, false);
       }
     }
   } else if (loginView && loggedInView) {
     // Not logged in
-    loginView.classList.remove('hidden');
-    loggedInView.classList.add('hidden');
+    loginView.classList.remove("hidden");
+    loggedInView.classList.add("hidden");
   }
 
   refreshNadi4uHeaderMenuState();
@@ -7600,24 +8799,29 @@ function updateNADI4UView() {
 }
 
 async function loginNADI4U(event) {
-  const email = document.getElementById('nadi4uEmail').value.trim();
-  const password = document.getElementById('nadi4uPassword').value;
+  const email = document.getElementById("nadi4uEmail").value.trim();
+  const password = document.getElementById("nadi4uPassword").value;
 
   if (!email || !password) {
-    alert('Please enter email and password');
+    alert("Please enter email and password");
     return;
   }
 
-  const btn = event?.currentTarget || document.querySelector('button[onclick^="loginNADI4U"]');
-  const originalText = btn ? btn.innerHTML : '';
+  const btn =
+    event?.currentTarget ||
+    document.querySelector('button[onclick^="loginNADI4U"]');
+  const originalText = btn ? btn.innerHTML : "";
   if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Logging in...';
+    btn.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Logging in...';
     btn.disabled = true;
   }
 
   try {
     if (window.NADI4U_API) {
-      const result = await NADI4U_API.login(email, password, { rememberCredentials: true });
+      const result = await NADI4U_API.login(email, password, {
+        rememberCredentials: true,
+      });
 
       // Get user info
       let userEmail = email;
@@ -7633,7 +8837,7 @@ async function loginNADI4U(event) {
       settings.userEmail = userEmail;
       settings.email = email;
       settings.password = password;
-      settings.lastLoginSource = 'settings';
+      settings.lastLoginSource = "settings";
       persistNadi4uSettings(settings);
 
       updateNADI4UView();
@@ -7641,10 +8845,10 @@ async function loginNADI4U(event) {
       window.eventListCurrentPage = 0;
       resetNadi4uSectionPages();
       renderEventList();
-      alert('Login successful!');
+      alert("Login successful!");
     }
   } catch (err) {
-    alert('Login failed: ' + err.message);
+    alert("Login failed: " + err.message);
   } finally {
     if (btn) {
       btn.innerHTML = originalText;
@@ -7655,45 +8859,63 @@ async function loginNADI4U(event) {
 
 async function loginNadi4uWithLeaveAccessContext(options = {}) {
   if (!window.NADI4U_API) {
-    throw new Error('NADI4U API is not available.');
+    throw new Error("NADI4U API is not available.");
   }
 
   const leaveUser = parseLeaveUserFromStorage();
-  const rawRole = typeof options.role === 'string' ? options.role : (leaveUser?.role || '');
-  const normalizedRawRole = String(rawRole || '').trim().toLowerCase();
+  const rawRole =
+    typeof options.role === "string" ? options.role : leaveUser?.role || "";
+  const normalizedRawRole = String(rawRole || "")
+    .trim()
+    .toLowerCase();
   let mappedRole = mapLeaveRoleToNadi4uRole(rawRole);
-  if (!mappedRole && (normalizedRawRole === NADI4U_HEADER_ROLE_MANAGER || normalizedRawRole === NADI4U_HEADER_ROLE_ASSISTANT)) {
+  if (
+    !mappedRole &&
+    (normalizedRawRole === NADI4U_HEADER_ROLE_MANAGER ||
+      normalizedRawRole === NADI4U_HEADER_ROLE_ASSISTANT)
+  ) {
     mappedRole = normalizedRawRole;
   }
   if (!mappedRole) {
-    throw new Error('Leave role must be Manager or Assistant Manager.');
+    throw new Error("Leave role must be Manager or Assistant Manager.");
   }
 
-  const siteName = String(options.siteName || leaveUser?.site_name || '').trim();
+  const siteName = String(
+    options.siteName || leaveUser?.site_name || "",
+  ).trim();
   if (!siteName) {
-    throw new Error('Leave site is required for NADI4U login.');
+    throw new Error("Leave site is required for NADI4U login.");
   }
 
   const siteSlug = toNadiSiteSlug(siteName);
   if (!siteSlug) {
-    throw new Error('Unable to generate site slug for NADI4U email.');
+    throw new Error("Unable to generate site slug for NADI4U email.");
   }
 
-  const siteId = options.siteId != null
-    ? String(options.siteId)
-    : (leaveUser?.site_id != null ? String(leaveUser.site_id) : '');
-  const email = buildNadi4uTemplateEmail(mappedRole, siteSlug).trim().toLowerCase();
+  const siteId =
+    options.siteId != null
+      ? String(options.siteId)
+      : leaveUser?.site_id != null
+        ? String(leaveUser.site_id)
+        : "";
+  const email = buildNadi4uTemplateEmail(mappedRole, siteSlug)
+    .trim()
+    .toLowerCase();
   const storedSettings = parseNadi4uSettingsFromStorage() || {};
-  const storedPassword = typeof storedSettings.password === 'string' ? storedSettings.password : '';
-  const password = typeof options.password === 'string' && options.password !== ''
-    ? options.password
-    : storedPassword;
+  const storedPassword =
+    typeof storedSettings.password === "string" ? storedSettings.password : "";
+  const password =
+    typeof options.password === "string" && options.password !== ""
+      ? options.password
+      : storedPassword;
 
   if (!password) {
-    throw new Error('NADI APP password is required.');
+    throw new Error("NADI APP password is required.");
   }
 
-  const result = await NADI4U_API.login(email, password, { rememberCredentials: true });
+  const result = await NADI4U_API.login(email, password, {
+    rememberCredentials: true,
+  });
 
   let userEmail = email;
   try {
@@ -7711,7 +8933,8 @@ async function loginNadi4uWithLeaveAccessContext(options = {}) {
   settings.templateSiteName = siteName;
   settings.templateSiteSlug = siteSlug;
   settings.templateRole = mappedRole;
-  settings.lastLoginSource = typeof options.source === 'string' ? options.source : 'leaveAccess';
+  settings.lastLoginSource =
+    typeof options.source === "string" ? options.source : "leaveAccess";
   persistNadi4uSettings(settings);
 
   updateNADI4UView();
@@ -7726,46 +8949,57 @@ async function loginNadi4uWithLeaveAccessContext(options = {}) {
     siteName,
     siteSlug,
     role: mappedRole,
-    syncResult
+    syncResult,
   };
 }
 
 async function loginNadi4uFromHeader(event) {
   if (!window.NADI4U_API) {
-    showNadi4uHeaderInlineStatus('NADI4U API is not available.', 'error');
+    showNadi4uHeaderInlineStatus("NADI4U API is not available.", "error");
     return;
   }
 
-  const button = event?.currentTarget || document.getElementById('nadi4uHeaderLoginSyncBtn');
+  const button =
+    event?.currentTarget || document.getElementById("nadi4uHeaderLoginSyncBtn");
   const template = getNadi4uTemplateFromLeaveSession();
   if (!template || !template.email) {
-    showNadi4uHeaderInlineStatus('Please login Leave Access as Manager/Assistant Manager first.', 'error');
+    showNadi4uHeaderInlineStatus(
+      "Please login Leave Access as Manager/Assistant Manager first.",
+      "error",
+    );
     return;
   }
 
-  const originalText = button ? button.innerHTML : '';
+  const originalText = button ? button.innerHTML : "";
   if (button) {
     button.disabled = true;
-    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Logging...';
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Logging...';
   }
-  showNadi4uHeaderInlineStatus('Logging in and syncing current month...', 'info');
+  showNadi4uHeaderInlineStatus(
+    "Logging in and syncing current month...",
+    "info",
+  );
 
   try {
     const loginResult = await loginNadi4uWithLeaveAccessContext({
-      siteId: template.siteId || '',
+      siteId: template.siteId || "",
       siteName: template.siteName,
       role: template.role,
       autoSync: true,
-      source: 'headerInline'
+      source: "headerInline",
     });
-    showNadi4uHeaderInlineStatus('Login & sync complete.', 'success');
+    showNadi4uHeaderInlineStatus("Login & sync complete.", "success");
 
     setTimeout(() => {
       closeHeaderLoginMenu();
-      showNadi4uHeaderInlineStatus('');
+      showNadi4uHeaderInlineStatus("");
     }, 900);
   } catch (error) {
-    showNadi4uHeaderInlineStatus(`Login/sync failed: ${error.message}`, 'error');
+    showNadi4uHeaderInlineStatus(
+      `Login/sync failed: ${error.message}`,
+      "error",
+    );
   } finally {
     if (button) {
       button.disabled = false;
@@ -7777,21 +9011,33 @@ async function loginNadi4uFromHeader(event) {
 function logoutNADI4U() {
   const previous = parseNadi4uSettingsFromStorage() || {};
   const preservedSettings = {
-    apiKey: previous.apiKey || (window.NADI4U_API ? NADI4U_API.defaultApiKey : ''),
-    email: previous.email || '',
-    password: previous.password || '',
-    templateSiteId: previous.templateSiteId || '',
-    templateSiteName: previous.templateSiteName || '',
-    templateSiteSlug: previous.templateSiteSlug || '',
+    apiKey:
+      previous.apiKey || (window.NADI4U_API ? NADI4U_API.defaultApiKey : ""),
+    email: previous.email || "",
+    password: previous.password || "",
+    templateSiteId: previous.templateSiteId || "",
+    templateSiteName: previous.templateSiteName || "",
+    templateSiteSlug: previous.templateSiteSlug || "",
     templateRole: previous.templateRole || NADI4U_HEADER_ROLE_MANAGER,
-    lastLoginSource: 'logout'
+    lastLoginSource: "logout",
   };
 
   if (window.NADI4U_API) {
     NADI4U_API.logout();
-    NADI4U_API.configure(preservedSettings.apiKey || NADI4U_API.defaultApiKey, '');
-    if (typeof NADI4U_API.setCredentials === 'function' && preservedSettings.email && preservedSettings.password) {
-      NADI4U_API.setCredentials(preservedSettings.email, preservedSettings.password, false);
+    NADI4U_API.configure(
+      preservedSettings.apiKey || NADI4U_API.defaultApiKey,
+      "",
+    );
+    if (
+      typeof NADI4U_API.setCredentials === "function" &&
+      preservedSettings.email &&
+      preservedSettings.password
+    ) {
+      NADI4U_API.setCredentials(
+        preservedSettings.email,
+        preservedSettings.password,
+        false,
+      );
     }
   }
 
@@ -7803,55 +9049,62 @@ function logoutNADI4U() {
 
 function logoutNadi4uFromHeaderMenu() {
   logoutNADI4U();
-  showNadi4uHeaderInlineStatus('');
+  showNadi4uHeaderInlineStatus("");
   closeHeaderLoginMenu();
 }
 
 function saveNADI4USettings() {
-  const apiKey = document.getElementById('nadi4uApiKey').value.trim();
-  const token = document.getElementById('nadi4uToken').value.trim();
+  const apiKey = document.getElementById("nadi4uApiKey").value.trim();
+  const token = document.getElementById("nadi4uToken").value.trim();
 
   if (!apiKey || !token) {
-    alert('Please fill in API Key and Token');
+    alert("Please fill in API Key and Token");
     return;
   }
 
   const settings = parseNadi4uSettingsFromStorage() || {};
   settings.apiKey = apiKey;
   settings.token = token;
-  settings.userEmail = 'Manual credentials';
-  settings.lastLoginSource = 'manualCredentials';
+  settings.userEmail = "Manual credentials";
+  settings.lastLoginSource = "manualCredentials";
   persistNadi4uSettings(settings);
 
   // Configure the API
   if (window.NADI4U_API) {
     NADI4U_API.configure(apiKey, token);
-    if (typeof NADI4U_API.setCredentials === 'function' && settings.email && settings.password) {
+    if (
+      typeof NADI4U_API.setCredentials === "function" &&
+      settings.email &&
+      settings.password
+    ) {
       NADI4U_API.setCredentials(settings.email, settings.password, false);
     }
   }
 
   updateNADI4UView();
-  alert('Settings saved successfully!');
+  alert("Settings saved successfully!");
 }
 
 async function testNADI4UConnection() {
   const settings = parseNadi4uSettingsFromStorage();
   if (!settings) {
-    showNADI4UStatus('Please login or enter credentials first', 'error');
+    showNADI4UStatus("Please login or enter credentials first", "error");
     return;
   }
 
-  showNADI4UStatus('Testing connection...', 'info');
+  showNADI4UStatus("Testing connection...", "info");
 
   if (window.NADI4U_API) {
     try {
       await ensureNADI4USession(settings);
       const data = await NADI4U_API.getAnnouncements();
       updateNADI4UView();
-      showNADI4UStatus(`Connection successful! Found ${data.length} announcements.`, 'success');
+      showNADI4UStatus(
+        `Connection successful! Found ${data.length} announcements.`,
+        "success",
+      );
     } catch (err) {
-      showNADI4UStatus(`Error: ${err.message}`, 'error');
+      showNADI4UStatus(`Error: ${err.message}`, "error");
     }
   }
 }
@@ -7860,13 +9113,14 @@ async function syncNADI4UData(options = {}) {
   const throwOnError = options?.throwOnError === true;
   const settings = parseNadi4uSettingsFromStorage();
   if (!settings) {
-    showNADI4UStatus('Please login or enter credentials first', 'error');
-    if (throwOnError) throw new Error('Please login or enter credentials first');
+    showNADI4UStatus("Please login or enter credentials first", "error");
+    if (throwOnError)
+      throw new Error("Please login or enter credentials first");
     return;
   }
 
   if (window.NADI4U_API) {
-    showNADI4UStatus('Syncing data...', 'info');
+    showNADI4UStatus("Syncing data...", "info");
 
     try {
       await ensureNADI4USession(settings);
@@ -7875,39 +9129,59 @@ async function syncNADI4UData(options = {}) {
 
       let nadi4uMonthData = { events: [], schedule: [] };
       if (typeof NADI4U_API.getSmartServicesNadi4uMonthData === "function") {
-        nadi4uMonthData = await NADI4U_API.getSmartServicesNadi4uMonthData(monthYear, monthIndex);
+        nadi4uMonthData = await NADI4U_API.getSmartServicesNadi4uMonthData(
+          monthYear,
+          monthIndex,
+        );
       } else {
-        throw new Error("Smart Services category sync is not available in the current API client.");
+        throw new Error(
+          "Smart Services category sync is not available in the current API client.",
+        );
       }
 
       const [announcements] = await Promise.all([
-        NADI4U_API.getAnnouncements()
+        NADI4U_API.getAnnouncements(),
       ]);
 
-      const rawEventMeta = Array.isArray(nadi4uMonthData.events) ? nadi4uMonthData.events : [];
-      const rawSchedule = Array.isArray(nadi4uMonthData.schedule) ? nadi4uMonthData.schedule : [];
-      const filteredMonthData = filterNadi4uMonthDataForCurrentSite(rawEventMeta, rawSchedule);
-      const eventMeta = Array.isArray(filteredMonthData.events) ? filteredMonthData.events : [];
-      const schedule = Array.isArray(filteredMonthData.schedule) ? filteredMonthData.schedule : [];
+      const rawEventMeta = Array.isArray(nadi4uMonthData.events)
+        ? nadi4uMonthData.events
+        : [];
+      const rawSchedule = Array.isArray(nadi4uMonthData.schedule)
+        ? nadi4uMonthData.schedule
+        : [];
+      const filteredMonthData = filterNadi4uMonthDataForCurrentSite(
+        rawEventMeta,
+        rawSchedule,
+      );
+      const eventMeta = Array.isArray(filteredMonthData.events)
+        ? filteredMonthData.events
+        : [];
+      const schedule = Array.isArray(filteredMonthData.schedule)
+        ? filteredMonthData.schedule
+        : [];
 
-      // Show preview
-      document.getElementById('nadi4uDataPreview').classList.remove('hidden');
-      const preview = {
-        schedule: schedule.slice(0, 5),
-        scheduleCount: schedule.length,
-        events: eventMeta.slice(0, 5),
-        eventCount: eventMeta.length,
-        announcements: announcements.slice(0, 3),
-        announcementCount: announcements.length
-      };
-      document.getElementById('nadi4uPreviewContent').textContent = JSON.stringify(preview, null, 2);
+      // Show preview when NADI4U settings panel exists. Public page hides that panel.
+      const previewWrap = document.getElementById("nadi4uDataPreview");
+      const previewContent = document.getElementById("nadi4uPreviewContent");
+      if (previewWrap && previewContent) {
+        previewWrap.classList.remove("hidden");
+        const preview = {
+          schedule: schedule.slice(0, 5),
+          scheduleCount: schedule.length,
+          events: eventMeta.slice(0, 5),
+          eventCount: eventMeta.length,
+          announcements: announcements.slice(0, 3),
+          announcementCount: announcements.length,
+        };
+        previewContent.textContent = JSON.stringify(preview, null, 2);
+      }
 
       // Store for later use
       setNadi4uStorageItem(NADI4U_SCHEDULE_STORAGE_KEY, schedule);
-      setNadi4uStorageItem('nadi4uAnnouncements', announcements);
+      setNadi4uStorageItem("nadi4uAnnouncements", announcements);
       setNadi4uStorageItem(NADI4U_EVENT_META_STORAGE_KEY, eventMeta);
 
-      showNADI4UStatus('Sync completed successfully.', 'success');
+      showNADI4UStatus("Sync completed successfully.", "success");
       updateNADI4UView();
       window.eventListCurrentPage = 0;
       resetNadi4uSectionPages();
@@ -7915,17 +9189,18 @@ async function syncNADI4UData(options = {}) {
       return {
         scheduleCount: schedule.length,
         eventCount: eventMeta.length,
-        announcementCount: announcements.length
+        announcementCount: announcements.length,
       };
     } catch (err) {
-      showNADI4UStatus(`Sync failed: ${err.message}`, 'error');
+      showNADI4UStatus(`Sync failed: ${err.message}`, "error");
       if (throwOnError) throw err;
     }
   }
 }
 
 async function syncNadi4uFromProgramList(event) {
-  const button = event?.currentTarget || document.getElementById("programListSyncBtn");
+  const button =
+    event?.currentTarget || document.getElementById("programListSyncBtn");
   const icon = button ? button.querySelector("i") : null;
 
   if (button) {
@@ -7952,17 +9227,20 @@ async function syncNadi4uFromProgramList(event) {
 }
 
 function showNADI4UStatus(message, type) {
-  const statusEl = document.getElementById('nadi4uStatus');
+  const statusEl = document.getElementById("nadi4uStatus");
   if (!statusEl) return;
 
-  statusEl.classList.remove('hidden');
+  statusEl.classList.remove("hidden");
 
-  if (type === 'error') {
-    statusEl.className = 'p-3 rounded-lg text-[10px] bg-red-100 text-red-700 border border-red-200';
-  } else if (type === 'success') {
-    statusEl.className = 'p-3 rounded-lg text-[10px] bg-green-100 text-green-700 border border-green-200';
+  if (type === "error") {
+    statusEl.className =
+      "p-3 rounded-lg text-[10px] bg-red-100 text-red-700 border border-red-200";
+  } else if (type === "success") {
+    statusEl.className =
+      "p-3 rounded-lg text-[10px] bg-green-100 text-green-700 border border-green-200";
   } else {
-    statusEl.className = 'p-3 rounded-lg text-[10px] bg-blue-100 text-blue-700 border border-blue-200';
+    statusEl.className =
+      "p-3 rounded-lg text-[10px] bg-blue-100 text-blue-700 border border-blue-200";
   }
 
   statusEl.textContent = message;
@@ -7982,7 +9260,11 @@ async function _initAndSyncOnLoad() {
     if (settings?.token) {
       NADI4U_API.configure(settings.apiKey, settings.token);
     }
-    if (typeof NADI4U_API.setCredentials === 'function' && settings?.email && settings?.password) {
+    if (
+      typeof NADI4U_API.setCredentials === "function" &&
+      settings?.email &&
+      settings?.password
+    ) {
       NADI4U_API.setCredentials(settings.email, settings.password, false);
     }
   }
@@ -7994,13 +9276,13 @@ async function _initAndSyncOnLoad() {
 }
 
 // Primary trigger – fires reliably in normal browser context.
-document.addEventListener('DOMContentLoaded', _initAndSyncOnLoad);
+document.addEventListener("DOMContentLoaded", _initAndSyncOnLoad);
 
 // Fallback trigger – covers Google Sites iframes and cases where
 // DOMContentLoaded fires before this script is evaluated (e.g. deferred
 // loading inside an embed). If _initAndSyncOnLoad already ran, the guard
 // at the top of the function prevents a second sync.
-window.addEventListener('load', _initAndSyncOnLoad);
+window.addEventListener("load", _initAndSyncOnLoad);
 
 // ===== MINI CALENDAR =====
 let miniCalendarYear = today.getFullYear();
@@ -8014,9 +9296,9 @@ function positionCalendarMini() {
   const btn = calendarMiniBtnRef;
   if (!wrap || !btn) return;
   const btnRect = btn.getBoundingClientRect();
-  wrap.style.right = (window.innerWidth - btnRect.right) + 'px';
-  wrap.style.top = (btnRect.bottom + 8) + 'px';
-  wrap.style.left = 'auto';
+  wrap.style.right = window.innerWidth - btnRect.right + "px";
+  wrap.style.top = btnRect.bottom + 8 + "px";
+  wrap.style.left = "auto";
 }
 
 function toggleCalendarMini(event) {
@@ -8052,12 +9334,12 @@ function toggleCalendarMini(event) {
     // Add resize listener to reposition dropdown on window resize
     if (!calendarMiniResizing) {
       calendarMiniResizing = true;
-      window.addEventListener('resize', positionCalendarMini);
+      window.addEventListener("resize", positionCalendarMini);
     }
 
     // Add document click listener to close when clicking outside
     setTimeout(() => {
-      document.addEventListener('click', closeCalendarMiniOnDocClick);
+      document.addEventListener("click", closeCalendarMiniOnDocClick);
     }, 100);
   }
 }
@@ -8072,7 +9354,7 @@ function closeCalendarMiniOnDocClick(e) {
   if (path.includes(dropdown)) return;
   if (!dropdown.classList.contains("hidden")) {
     closeCalendarMini();
-    document.removeEventListener('click', closeCalendarMiniOnDocClick);
+    document.removeEventListener("click", closeCalendarMiniOnDocClick);
   }
 }
 
@@ -8090,14 +9372,14 @@ function closeCalendarMini() {
   // Reset positioning
   const wrap = document.getElementById("calendarMiniWrap");
   if (wrap) {
-    wrap.style.left = '';
-    wrap.style.top = '';
-    wrap.style.right = '';
+    wrap.style.left = "";
+    wrap.style.top = "";
+    wrap.style.right = "";
   }
 
   // Remove listeners
-  document.removeEventListener('click', closeCalendarMiniOnDocClick);
-  window.removeEventListener('resize', positionCalendarMini);
+  document.removeEventListener("click", closeCalendarMiniOnDocClick);
+  window.removeEventListener("resize", positionCalendarMini);
   calendarMiniResizing = false;
 }
 
@@ -8105,8 +9387,21 @@ function renderMiniCalendar() {
   const panel = document.getElementById("calendarMiniPanel");
   if (!panel) return;
 
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const weekdays = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
   let html = `
     <div class="flex items-center justify-between mb-3">
@@ -8119,12 +9414,16 @@ function renderMiniCalendar() {
       </button>
     </div>
     <div class="grid grid-cols-7 mb-1">
-      ${weekdays.map(d => `<div class="text-center text-[9px] font-bold text-slate-400 uppercase">${d}</div>`).join("")}
+      ${weekdays.map((d) => `<div class="text-center text-[9px] font-bold text-slate-400 uppercase">${d}</div>`).join("")}
     </div>
     <div class="grid grid-cols-7 gap-0.5">`;
 
   const firstDay = new Date(miniCalendarYear, miniCalendarMonth, 1).getDay();
-  const daysInMonth = new Date(miniCalendarYear, miniCalendarMonth + 1, 0).getDate();
+  const daysInMonth = new Date(
+    miniCalendarYear,
+    miniCalendarMonth + 1,
+    0,
+  ).getDate();
 
   for (let i = 0; i < firstDay; i++) {
     html += "<div></div>";
@@ -8136,7 +9435,11 @@ function renderMiniCalendar() {
     const isToday = dateStr === toLocalISOString(today);
     const isSelected = window.selectedFilterDate === dateStr;
 
-    const bgClass = isSelected ? "bg-blue-600 text-white ring-2 ring-blue-400" : isToday ? "bg-blue-100 text-blue-700 font-bold" : "hover:bg-slate-100 text-slate-600";
+    const bgClass = isSelected
+      ? "bg-blue-600 text-white ring-2 ring-blue-400"
+      : isToday
+        ? "bg-blue-100 text-blue-700 font-bold"
+        : "hover:bg-slate-100 text-slate-600";
     html += `<button onclick="selectMiniDate('${dateStr}')" class="h-8 w-full rounded-lg text-xs font-medium transition-all ${bgClass}">${day}</button>`;
   }
 
@@ -8176,8 +9479,10 @@ function selectMiniDate(dateStr) {
 
   // Auto-sync NADI4U for the selected month so data is fresh.
   if (window.NADI4U_API) {
-    syncNADI4UData({ throwOnError: false }).then(() => {
-      renderEventList();
-    }).catch(() => {});
+    syncNADI4UData({ throwOnError: false })
+      .then(() => {
+        renderEventList();
+      })
+      .catch(() => {});
   }
 }
