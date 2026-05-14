@@ -1057,6 +1057,7 @@ const NADI4U_HEADER_ROLE_ASSISTANT = "assistantmanager";
 const NADI4U_AUTO_LOGIN_EMAIL = "assistantmanager@kebun-bunga.nadi.my";
 const NADI4U_AUTO_LOGIN_PASSWORD = "1234qwefASDF#";
 const NADI4U_AUTO_LOGIN_SITE_NAME = "NADI Kebun Bunga";
+const NADI4U_AUTO_LOGIN_SITE_ID = "952";
 const NADI4U_AUTO_LOGIN_SITE_SLUG = "kebun-bunga";
 const NADI4U_AUTO_LOGIN_SOURCE = "autoKebunBunga";
 let nadi4uAutoLoginSyncPromise = null;
@@ -1647,30 +1648,7 @@ function resolveNumericSiteId(siteNameOrId) {
 }
 
 function getUserNadi4uSiteId() {
-  try {
-    const leaveUser =
-      typeof parseLeaveUserFromStorage === "function"
-        ? parseLeaveUserFromStorage()
-        : null;
-    const mappedId =
-      resolveNumericSiteId(leaveUser?.site_name) ||
-      resolveNumericSiteId(leaveUser?.site_id);
-    if (mappedId) return mappedId;
-  } catch (_) {}
-
-  try {
-    const settings =
-      typeof parseNadi4uSettingsFromStorage === "function"
-        ? parseNadi4uSettingsFromStorage()
-        : null;
-    const templateSiteId = resolveNumericSiteId(settings?.templateSiteId);
-    if (templateSiteId) return templateSiteId;
-
-    const templateSiteName = resolveNumericSiteId(settings?.templateSiteName);
-    if (templateSiteName) return templateSiteName;
-  } catch (_) {}
-
-  return "";
+  return NADI4U_AUTO_LOGIN_SITE_ID;
 }
 
 function hasActiveLeaveSession() {
@@ -8447,6 +8425,7 @@ function buildAutoNadi4uSettings(existingSettings = {}) {
     email: NADI4U_AUTO_LOGIN_EMAIL,
     password: NADI4U_AUTO_LOGIN_PASSWORD,
     templateRole: NADI4U_HEADER_ROLE_ASSISTANT,
+    templateSiteId: NADI4U_AUTO_LOGIN_SITE_ID,
     templateSiteName: NADI4U_AUTO_LOGIN_SITE_NAME,
     templateSiteSlug: NADI4U_AUTO_LOGIN_SITE_SLUG,
     lastLoginSource: NADI4U_AUTO_LOGIN_SOURCE,
@@ -8495,16 +8474,10 @@ async function autoLoginAndSyncNadi4uOnLoad() {
         mergedSettings.token = loginResult.access_token;
       }
       mergedSettings.userEmail = NADI4U_AUTO_LOGIN_EMAIL;
-      try {
-        const raw = localStorage.getItem("leave_user");
-        if (raw) {
-          const leaveUser = JSON.parse(raw);
-          const mappedId =
-            resolveNumericSiteId(leaveUser?.site_name) ||
-            resolveNumericSiteId(leaveUser?.site_id);
-          if (mappedId) mergedSettings.templateSiteId = mappedId;
-        }
-      } catch (_) {}
+      mergedSettings.templateSiteId = NADI4U_AUTO_LOGIN_SITE_ID;
+      mergedSettings.templateSiteName = NADI4U_AUTO_LOGIN_SITE_NAME;
+      mergedSettings.templateSiteSlug = NADI4U_AUTO_LOGIN_SITE_SLUG;
+      mergedSettings.templateRole = NADI4U_HEADER_ROLE_ASSISTANT;
       persistNadi4uSettings(mergedSettings);
 
       updateNADI4UView();
