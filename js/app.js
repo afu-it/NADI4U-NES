@@ -439,8 +439,8 @@ function ensureEventsArray() {
 }
 
 let siteSettings = {
-  title: "NADI SCSB",
-  subtitle: "PULAU PINANG",
+  title: "NADI",
+  subtitle: "",
   sections: [],
   managerOffdays: [],
   assistantManagerOffdays: [],
@@ -3514,8 +3514,8 @@ async function loadFromSupabase() {
     // Build siteSettings object from batched results
     siteSettings = {
       // ID 1: Basic config
-      title: settingsMap[1]?.title || "NADI SCSB",
-      subtitle: settingsMap[1]?.subtitle || "PULAU PINANG",
+      title: "NADI",
+      subtitle: "",
       calendarFilters: settingsMap[1]?.calendarFilters || {
         showCategories: true,
         showHolidays: true,
@@ -3594,8 +3594,9 @@ async function loadFromSupabase() {
 }
 
 function updateUIFromSettings() {
-  document.getElementById("siteTitle").textContent = siteSettings.title;
-  document.getElementById("siteSubtitle").textContent = siteSettings.subtitle;
+  document.getElementById("siteTitle").textContent = "NADI";
+  const siteSubtitle = document.getElementById("siteSubtitle");
+  if (siteSubtitle) siteSubtitle.textContent = "";
   updateSiteTitleShimmer();
 }
 
