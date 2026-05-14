@@ -5190,7 +5190,18 @@ function renderCustomLinks() {
         columnDiv.className = "flex flex-col gap-3 min-w-0";
 
         const colButtons = sec.buttons
-          ? sec.buttons.filter((b) => b.col === c).sort((a, b) => a.row - b.row)
+          ? sec.buttons
+              .filter((b) => {
+                const normalizedLabel = (b.label || "").toLowerCase();
+                if (
+                  normalizedLabel.includes("webmail") &&
+                  normalizedLabel.includes("samudra")
+                )
+                  return false;
+                if (normalizedLabel === "spx samudra") return false;
+                return b.col === c;
+              })
+              .sort((a, b) => a.row - b.row)
           : [];
 
         if (colButtons.length > 0) {
