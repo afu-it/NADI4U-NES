@@ -6241,8 +6241,8 @@ function renderSectionPagination(
 
   if (shouldFloatPagination) {
     return `
-      <div class="pagination-controls fixed inset-x-0 bottom-2 sm:bottom-4 z-40 flex justify-center px-2 sm:px-4 pointer-events-none">
-        <div class="flex justify-center items-center gap-2 sm:gap-4 max-w-max rounded-xl border border-slate-200 bg-white/95 px-2 py-2 sm:px-4 sm:py-3 shadow-lg backdrop-blur pointer-events-auto">
+      <div class="pagination-controls flex justify-center px-2 sm:px-4" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;pointer-events:none;padding-bottom:max(0.5rem, env(safe-area-inset-bottom));">
+        <div class="flex justify-center items-center gap-2 sm:gap-4 max-w-max rounded-xl border border-slate-200 bg-white/95 px-2 py-2 sm:px-4 sm:py-3 shadow-lg backdrop-blur" style="pointer-events:auto;">
           <button
             onclick="changeSectionEventPage('${sectionKey}', -1)"
             class="px-2.5 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors whitespace-nowrap ${currentPage === 0 ? "opacity-50 cursor-not-allowed" : ""}"
