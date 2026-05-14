@@ -2182,7 +2182,7 @@ function eventMatchesNadi4uSubcategoryFilter(eventItem, normalizedFilter) {
 }
 
 function getProgramListDaySectionLabel() {
-  return "Today Events";
+  return "Today Programs";
 }
 
 function eventMatchesNadi4uSearch(eventItem, normalizedQuery) {
@@ -2910,11 +2910,11 @@ function updateProgramListHeader() {
   }
 
   if (dayBtn) {
-    dayBtn.textContent = `Today Events (${dayCount})`;
+    dayBtn.textContent = `Today Programs (${dayCount})`;
   }
 
   if (multiBtn) {
-    multiBtn.textContent = `Multiple Day Events (${multiCount})`;
+    multiBtn.textContent = `Multiple Day Programs (${multiCount})`;
   }
 
   const applySummaryButtonStyles = (button, hasResults) => {
@@ -4701,7 +4701,7 @@ async function verifyEventsInSupabase() {
       });
     } else {
       if (window.DEBUG_MODE)
-        console.log("⚠ Supabase verification: No events stored yet");
+        console.log("⚠ Supabase verification: No programs stored yet");
     }
   } catch (error) {
     if (window.DEBUG_MODE) console.error("Error verifying events:", error);
@@ -5878,7 +5878,7 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
       .join("");
 
     if (!badgesHtml) {
-      return '<div class="text-[8px] italic text-slate-400">No events</div>';
+      return '<div class="text-[8px] italic text-slate-400">No programs</div>';
     }
     return `<div class="flex flex-wrap gap-2">${badgesHtml}</div>`;
   };
@@ -5968,7 +5968,7 @@ function renderCategoryCounts(displayEvents = [], sourceEvents = null) {
   );
   hasRenderedSection = true;
   html += renderCountSection(
-    "Multiple Day Events",
+    "Multiple Day Programs",
     multiDayCounts,
     multiDayTotal,
     { isFirst: false, clickable: true, clickSource: "multi" },
@@ -6289,7 +6289,7 @@ function renderProgramEventSection(rootContainer, options = {}) {
   const sectionId = String(options?.sectionId || "");
   const sectionLabel = String(options?.sectionLabel || "");
   const eventList = Array.isArray(options?.eventList) ? options.eventList : [];
-  const emptyTitle = String(options?.emptyTitle || "No events found");
+  const emptyTitle = String(options?.emptyTitle || "No programs found");
   const emptySubtitle = String(options?.emptySubtitle || "");
   const shouldFloatPagination = options?.floatPagination === true;
   const pageStateKey = getSectionProgramListPageStateKey(sectionKey);
@@ -6406,9 +6406,9 @@ function renderEventList() {
     visibleMultiEvents = renderProgramEventSection(container, {
       sectionKey: "multi",
       sectionId: "multiDayEventsSection",
-      sectionLabel: "Multiple Day Events",
+      sectionLabel: "Multiple Day Programs",
       eventList: sectionedData.multiDayEvents,
-      emptyTitle: "No Multiple Day Events found",
+      emptyTitle: "No Multiple Day Programs found",
       emptySubtitle:
         "No multi-day Smart Services NADI4U programs match current filter.",
       floatPagination: true,
@@ -6417,9 +6417,9 @@ function renderEventList() {
     visibleTodayEvents = renderProgramEventSection(container, {
       sectionKey: "today",
       sectionId: "todayEventsSection",
-      sectionLabel: "Today Events",
+      sectionLabel: "Today Programs",
       eventList: sectionedData.todayEvents,
-      emptyTitle: "No Today Events found",
+      emptyTitle: "No Today Programs found",
       emptySubtitle:
         "No Smart Services NADI4U programs match current filter for today.",
     });
