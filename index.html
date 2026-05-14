@@ -1,0 +1,2457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NADI SCSB Calendar</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232228a4'/%3E%3Cpath d='M9 23V9h4l6 9V9h4v14h-4l-6-9v9H9z' fill='white'/%3E%3C/svg%3E" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" crossorigin="anonymous"></script>
+    <style type="text/tailwindcss">
+      /* Tailwind CSS v4 theme configuration */
+      @layer base {
+        :root {
+          --color-nadi: #2228a4;
+          --color-nadi-hover: #1b1d8a;
+          --color-cat-entrepreneur: #facc15;
+          --color-cat-learning: #3b82f6;
+          --color-cat-wellbeing: #594fa1;
+          --color-cat-awareness: #8b5cf6;
+          --color-cat-gov: #ef4444;
+          --font-family-sans: "Plus Jakarta Sans", sans-serif;
+          --font-family-display: "Space Grotesk", sans-serif;
+          --shadow-card: 0 2px 10px -2px rgba(0, 0, 0, 0.05);
+        }
+      }
+      
+      .offday-line-m { position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 16px; height: 2.5px; background-color: #00aff0; border-radius: 2px; }
+      .offday-line-am { position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 16px; height: 2.5px; background-color: #90cf53; border-radius: 2px; }
+      .program-list-animating { opacity: 0; }
+      .program-list-ready { opacity: 1; transition: opacity 180ms ease; }
+    </style>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/leave-system.css" />
+    <link rel="stylesheet" href="css/reminder-system.css" />
+    <link rel="stylesheet" href="css/kpi-system.css" />
+    <script>
+      (function () {
+        const createMemoryStorage = function () {
+          const memory = new Map();
+          return {
+            getItem(key) {
+              return memory.has(key) ? memory.get(key) : null;
+            },
+            setItem(key, value) {
+              memory.set(key, String(value));
+            },
+            removeItem(key) {
+              memory.delete(key);
+            }
+          };
+        };
+
+        const canUseStorage = function (storage) {
+          try {
+            const probeKey = "__nadi_storage_probe__" + Date.now();
+            storage.setItem(probeKey, "1");
+            storage.removeItem(probeKey);
+            return true;
+          } catch (error) {
+            return false;
+          }
+        };
+
+        try {
+          if (window.top !== window.self) {
+            if (!canUseStorage(window.localStorage)) {
+              Object.defineProperty(window, "localStorage", { value: createMemoryStorage(), configurable: true });
+            }
+            if (!canUseStorage(window.sessionStorage)) {
+              Object.defineProperty(window, "sessionStorage", { value: createMemoryStorage(), configurable: true });
+            }
+          }
+        } catch (error) {
+          const fallback = createMemoryStorage();
+          Object.defineProperty(window, "localStorage", { value: fallback, configurable: true });
+          Object.defineProperty(window, "sessionStorage", { value: fallback, configurable: true });
+        }
+      })();
+    </script>
+    <script src="js/supabase.js"></script>
+    <script src="js/nadi4u-api.js"></script>
+  </head>
+  <body class="min-h-screen flex flex-col text-slate-800 font-sans">
+    <header class="sticky top-0 z-40 header-bg shadow-md">
+      <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div
+          id="editableHeader"
+          class="flex items-center gap-3 select-none group"
+        >
+          <div>
+            <h1 id="siteTitle" class="text-base font-bold leading-tight text-white">
+              NADI SCSB
+            </h1>
+            <p id="siteSubtitle" class="text-[9px] font-bold text-slate-300 tracking-wider group-hover:text-slate-200">
+              PULAU PINANG
+            </p>
+          </div>
+          <div id="current-date-header" class="hidden sm:flex flex-col items-end border-l border-white/20 pl-3"></div>
+        </div>
+          <div class="flex items-center gap-3 ml-auto">
+            <!-- Bookmarks Button -->
+            <div class="relative">
+              <button
+                id="bookmarksBtn"
+                onclick="toggleBookmarksMenu(event)"
+                class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
+                title="Bookmarks"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <i class="fa-solid fa-bookmark text-[#2228a4] text-xs"></i>
+              </button>
+              <div id="bookmarksDropdown" class="hidden fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
+                <div class="bookmarks-backdrop" onclick="closeBookmarksMenu()" aria-hidden="true"></div>
+                <div class="bookmarks-panel-wrap">
+                  <div class="bookmarks-panel relative w-[min(92vw,980px)] rounded-xl border border-slate-200 bg-white shadow-xl p-3">
+                    <button
+                      type="button"
+                      onclick="closeBookmarksMenu()"
+                      class="lm-tab absolute right-3 top-3"
+                      aria-label="Close bookmarks"
+                      title="Close"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                      <span>Close</span>
+                    </button>
+                    <div class="mb-3 text-center">
+                      <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Bookmarks</span>
+                    </div>
+                    <div id="bookmarksDropdownContent" class="max-h-[60vh] overflow-y-auto pr-1 space-y-3"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reminder Button -->
+            <button
+              id="reminderBtn"
+              onclick="toggleReminderPanel()"
+              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
+              title="Reminders"
+              aria-expanded="false"
+              aria-controls="reminderOverlay"
+            >
+              <i class="fa-solid fa-bell text-[#2228a4] text-xs"></i>
+              <span id="reminderBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-white text-[9px] flex items-center justify-center font-bold">0</span>
+            </button>
+
+            <!-- KPI Button -->
+            <button
+              id="kpiBtn"
+              onclick="handleKpiButtonClick()"
+              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
+              title="KPI Tracking"
+              aria-expanded="false"
+              aria-controls="kpiOverlay"
+            >
+              <i class="fa-solid fa-bullseye text-[#2228a4] text-xs"></i>
+              <span class="ml-1">KPI</span>
+              <span id="kpiBadge" class="hidden absolute -top-1 -right-2 min-w-[20px] h-4 px-1 bg-red-500 text-white text-[9px] flex items-center justify-center font-bold rounded-full border-2 border-white">0</span>
+            </button>
+
+            <!-- Leave Button -->
+            <button
+              id="leaveBtn"
+              onclick="showNADIAvailability()"
+              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              title="Leave Management"
+            >
+              <i class="fa-solid fa-calendar-days"></i>
+              <span>Leave</span>
+            </button>
+
+            <!-- Announcement Link -->
+            <a
+              href="announcements.html"
+              id="announcementBtn"
+              class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-3 py-1.5 h-[30px] rounded shadow flex items-center gap-1 transition-colors relative"
+            >
+              <i class="fa-solid fa-bullhorn text-[#2228a4]"></i> Announcements
+              <span id="newAnnouncementDot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </a>
+
+            <!-- Login Button with Dropdown -->
+            <div class="relative">
+              <button
+                id="loginBtn"
+                onclick="toggleLogoutDropdown(event)"
+                class="text-[10px] font-bold text-[#2228a4] bg-white hover:bg-slate-100 px-2.5 py-1.5 h-[30px] rounded shadow flex items-center justify-center transition-colors relative cursor-pointer"
+                title="Login"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <i class="fa-solid fa-user text-[#2228a4] text-xs"></i>
+                <span class="ml-1">Login</span>
+                <i class="fa-solid fa-chevron-down text-[8px] ml-1"></i>
+                <span id="nadi4uHeaderBadgeDot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+              </button>
+              <div id="logoutDropdown" class="hidden absolute right-0 top-full mt-2 z-50 w-[320px]">
+                <div class="rounded-xl border border-slate-200 bg-white shadow-xl p-3 space-y-3">
+                  <div id="leaveQuickSection" class="rounded-lg border border-slate-200 p-2.5">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[9px] font-bold uppercase tracking-wide text-slate-500">NADI SCSB</span>
+                    </div>
+                    <p id="leaveQuickState" class="text-[10px] text-slate-600 mb-2">Not logged in</p>
+                    <div id="leaveQuickActions" class="space-y-1.5"></div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div id="current-date-header" class="hidden sm:flex flex-col items-end border-l border-white/20 pl-3"></div>
+          </div>
+      </div>
+    </header>
+
+    <!-- Reminder Marquee -->
+    <div id="reminderMarquee" class="reminder-marquee hidden" role="status" aria-live="polite">
+      <div class="reminder-marquee-inner">
+        <span class="reminder-marquee-pill">
+          <i class="fa-solid fa-bell"></i>
+          Due today
+        </span>
+        <div class="reminder-marquee-window">
+          <div id="reminderMarqueeContent" class="reminder-marquee-track"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Mini Dropdown -->
+    <div id="calendarMiniDropdown" class="hidden" aria-hidden="true">
+      <div id="calendarMiniWrap" style="position:fixed;z-index:9999">
+        <div id="calendarMiniPanel" class="bg-white rounded-xl shadow-xl border border-slate-200 p-4" style="width:320px">
+          <!-- JS renders here -->
+        </div>
+      </div>
+    </div>
+
+    <main class="flex-grow w-full px-4 py-6" style="font-size: 11pt !important">
+      <div class="max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row gap-4 items-start">
+          <!-- BASE_CLASS: bg-white rounded-lg border border-slate-200 p-3 shadow-sm -->
+          <!--
+          <div class="w-full md:w-7/12 order-1 md:order-2">
+            <div class="bg-white rounded-xl shadow-card border border-slate-200 p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <button id="prevMonth" class="w-7 h-7 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-800" aria-label="Previous month">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                  </button>
+                  <div class="text-center">
+                    <span id="calendarMonthLabel" class="block text-lg font-bold text-slate-900"></span>
+                    <span id="calendarYearLabel" class="text-xs font-semibold text-slate-400"></span>
+                  </div>
+                  <button id="nextMonth" class="w-7 h-7 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-800" aria-label="Next month">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                  </button>
+                </div>
+              
+<div class="grid grid-cols-7 mb-2 border-b border-slate-100 pb-2">
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">SUN</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">MON</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">TUE</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">WED</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">THU</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">FRI</div>
+                <div class="text-center text-[10px] font-bold text-slate-400 uppercase">SAT</div>
+              </div>
+              <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+              <div id="calendarSkeleton" class="hidden">
+                <div class="grid grid-cols-7 gap-1">
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                  <div class="skeleton skeleton-calendar-cell"></div>
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100">
+                <div class="flex flex-wrap gap-x-4 gap-y-2 justify-center text-[9px] font-semibold text-slate-500 mb-3">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Usahawan
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Pembelajaran
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Kesejahteraan
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-violet-500"></span> Kesedaran
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inisiatif Kerajaan
+                  </div>
+                </div>
+                <div
+                  class="flex justify-center gap-4 text-[9px] font-semibold text-slate-500 border-t border-slate-50 pt-2"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full border border-slate-300"></span> Cuti Umum
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full border-2 border-yellow-400 bg-yellow-100"></span>
+                    Cuti Sekolah
+                  </div>
+                </div>
+                <div
+                  class="flex justify-center gap-4 text-[9px] font-semibold text-slate-500 border-t border-slate-100 pt-2 mt-2 relative items-center"
+                >
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-1 rounded-sm bg-[#00aff0]"></span>
+                    M Off
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-1 rounded-sm bg-[#90cf53]"></span>
+                    AM Off
+                  </div>
+                  <div class="flex items-center gap-0.5">
+                    <span class="w-2 h-0.5 rounded-sm bg-[#00aff0]" style="box-shadow: 0 0 3px #00aff0;"></span>
+                    <span class="w-0.5 h-0.5 rounded-sm bg-transparent"></span>
+                    <span class="w-2 h-0.5 rounded-sm bg-[#00aff0]" style="box-shadow: 0 0 3px #00aff0;"></span>
+                    M Replace
+                  </div>
+                  <div class="flex items-center gap-0.5">
+                    <span class="w-2 h-0.5 rounded-sm bg-[#90cf53]" style="box-shadow: 0 0 3px #90cf53;"></span>
+                    <span class="w-0.5 h-0.5 rounded-sm bg-transparent"></span>
+                    <span class="w-2 h-0.5 rounded-sm bg-[#90cf53]" style="box-shadow: 0 0 3px #90cf53;"></span>
+                    AM Replace
+                  </div>
+                  <div class="relative">
+                    <button
+                      onclick="toggleCalendarFilter()"
+                      id="calendarFilterBtn"
+                      class="w-6 h-6 flex items-center justify-center rounded bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-300 shadow-sm transition-colors"
+                      title="Filter Calendar"
+                    >
+                      <i class="fa-solid fa-eye-slash text-[9px]"></i>
+                    </button>
+                    <div id="calendarFilterPanel" class="filter-hidden absolute bottom-full right-0 mb-2 bg-white rounded-lg border border-slate-200 shadow-lg p-2 w-36 z-50">
+                      <div class="flex justify-between items-center mb-1.5 pb-1 border-b border-slate-100">
+                        <span class="text-[9px] font-bold text-slate-500 uppercase">Show/Hide</span>
+                        <button onclick="resetCalendarFilters()" class="text-[8px] text-blue-600 hover:underline">Reset</button>
+                       </div>
+                        <div class="space-y-1 text-[9px]">
+                          <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="filterShowCategories" name="filterShowCategories" autocomplete="off" checked onchange="saveCalendarFilters()" class="rounded border-slate-300 w-3 h-3">
+                            <span>Categories</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="filterShowHolidays" name="filterShowHolidays" autocomplete="off" checked onchange="saveCalendarFilters()" class="rounded border-slate-300 w-3 h-3">
+                            <span>Cuti Umum</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="filterShowSchoolHolidays" name="filterShowSchoolHolidays" autocomplete="off" checked onchange="saveCalendarFilters()" class="rounded border-slate-300 w-3 h-3">
+                            <span>Cuti Sekolah</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="filterShowOffdays" name="filterShowOffdays" autocomplete="off" checked onchange="saveCalendarFilters()" class="rounded border-slate-300 w-3 h-3">
+                            <span>Off Days</span>
+                          </label>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            -->
+
+            <!-- categoryCounts (Total Programs) hidden for cleaner view -->
+            <!-- <div id="categoryCounts" class="mt-4"></div> -->
+          </div>
+
+          <div class="w-full order-2 md:order-1 flex flex-col">
+            <div class="mb-2 pr-1">
+              <div id="nadi4uHeroHeader" onclick="handleNadi4uHeroBackgroundClick(event)" class="rounded-[22px] border border-slate-200/80 bg-white px-3 py-3.5 sm:px-4 sm:py-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.22)]">
+                <div class="hidden">
+                  <button
+                    id="programListPrevBtn"
+                    onclick="changeProgramListView(-1)"
+                    type="button"
+                  ></button>
+                  <button
+                    id="programListNextBtn"
+                    onclick="changeProgramListView(1)"
+                    type="button"
+                  ></button>
+                </div>
+                <div class="relative flex flex-col items-center text-center gap-2.5">
+                  <div class="flex flex-col items-center gap-1 min-w-0">
+                    <h2 id="programsListHeader" class="text-[18px] sm:text-[21px] font-semibold uppercase tracking-[0.12em] text-slate-900 cursor-pointer select-none transition-transform active:scale-95 leading-tight" style="font-family: var(--font-family-display);">SMART SERVICES NADI4U</h2>
+                    <span id="programsListModeLabel" class="hidden text-[10px] font-semibold text-slate-500">Program List</span>
+                  </div>
+                  <div class="grid w-full max-w-[300px] grid-cols-2 gap-1.5">
+                    <button
+                      id="programListTodaySummaryBtn"
+                      onclick="setNadi4uListType('day')"
+                      class="min-h-[30px] px-2.5 py-1 rounded-[14px] border border-slate-200 bg-white text-slate-700 text-[8px] font-semibold hover:border-slate-300 transition-all duration-200 ease-out cursor-pointer active:scale-[0.98]"
+                      type="button"
+                    >
+                      Today Events
+                    </button>
+                    <button
+                      id="programListMultiSummaryBtn"
+                      onclick="setNadi4uListType('multi')"
+                      class="min-h-[30px] px-2.5 py-1 rounded-[14px] border border-slate-200 bg-white text-slate-700 text-[8px] font-semibold hover:border-slate-300 transition-all duration-200 ease-out cursor-pointer active:scale-[0.98]"
+                      type="button"
+                    >
+                      Multiple Day Events
+                    </button>
+                  </div>
+                  <div id="nadi4uPillarButtons" class="flex flex-wrap items-center justify-center gap-1.5 w-full max-w-[720px]">
+                    <button id="nadi4uPillarBtnEntrepreneur" onclick="setNadi4uPillarFilter('entrepreneur')" class="min-h-[28px] px-2.5 py-1 rounded-full border text-[8px] font-semibold transition-colors cursor-pointer" type="button">Entrepreneur</button>
+                    <button id="nadi4uPillarBtnLearning" onclick="setNadi4uPillarFilter('learning')" class="min-h-[28px] px-2.5 py-1 rounded-full border text-[8px] font-semibold transition-colors cursor-pointer" type="button">Lifelong Learning</button>
+                    <button id="nadi4uPillarBtnAwareness" onclick="setNadi4uPillarFilter('awareness')" class="min-h-[28px] px-2.5 py-1 rounded-full border text-[8px] font-semibold transition-colors cursor-pointer" type="button">Awareness</button>
+                    <button id="nadi4uPillarBtnWellbeing" onclick="setNadi4uPillarFilter('wellbeing')" class="min-h-[28px] px-2.5 py-1 rounded-full border text-[8px] font-semibold transition-colors cursor-pointer" type="button">Wellbeing</button>
+                    <button id="nadi4uPillarBtnGov" onclick="setNadi4uPillarFilter('gov')" class="min-h-[28px] px-2.5 py-1 rounded-full border text-[8px] font-semibold transition-colors cursor-pointer" type="button">Gov Initiative</button>
+                  </div>
+                  <div class="flex flex-wrap items-center justify-center gap-2 pt-0.5">
+                    <button
+                      id="programListSortBtn"
+                      onclick="toggleSort()"
+                      class="h-7 px-3 flex items-center justify-center gap-1 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-purple-600 hover:border-purple-300 transition-colors cursor-pointer"
+                      title="Sort"
+                      type="button"
+                    >
+                      <i class="fa-solid fa-arrow-down-a-z text-[10px]"></i>
+                      <span class="text-[8px] font-semibold">Sort</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center justify-start gap-2">
+                  <button
+                      id="programListSearchBtn"
+                      onclick="toggleNadi4uSearch()"
+                      class="hidden w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 transition-colors cursor-pointer"
+                      title="Search Smart Services NADI4U"
+                      aria-label="Search Smart Services NADI4U"
+                      type="button"
+                    >
+                      <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                    </button>
+                    <button
+                      onclick="toggleFilter()"
+                      class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors cursor-pointer"
+                      title="Filter"
+                      aria-label="Filter"
+                      type="button"
+                    >
+                      <i class="fa-solid fa-filter text-[10px]"></i>
+                    </button>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2 ml-auto">
+                  <button
+                    id="programListSyncBtn"
+                    onclick="syncNadi4uFromProgramList(event)"
+                    class="w-7 h-7 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
+                    type="button"
+                    title="Sync NADI4U"
+                    aria-label="Sync NADI4U"
+                  >
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                  </button>
+                  <button
+                    onclick="toggleCalendarMini(event)"
+                    class="h-7 px-2.5 rounded-full flex items-center gap-1 text-[8px] font-semibold text-slate-600 bg-white border border-slate-200 hover:text-slate-800 hover:border-slate-300 transition-colors cursor-pointer"
+                    title="Calendar"
+                    type="button"
+                  >
+                    <i class="fa-solid fa-calendar text-xs"></i> Calendar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="sortSection" class="filter-hidden bg-white p-2 rounded-lg border border-slate-200 mb-3 shadow-sm">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Sort By</span>
+              </div>
+              <select
+                id="sortSelect"
+                onchange="applySorting()"
+                class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] font-semibold outline-none focus:border-purple-400"
+              >
+                <option value="category">Category</option>
+                <option value="startTime" selected>Start Time</option>
+              </select>
+            </div>
+
+            <div id="nadi4uSearchSection" class="hidden filter-hidden bg-white p-2 rounded-lg border border-slate-200 mb-3 shadow-sm">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Smart Services Search</span>
+                <button
+                  id="clearNadi4uSearchBtn"
+                  onclick="clearNadi4uSearch()"
+                  class="hidden text-[9px] text-red-500 hover:underline"
+                >
+                  Reset
+                </button>
+              </div>
+              <div class="flex gap-2 items-center">
+                <label for="nadi4uSearchInput" class="sr-only">Search Smart Services NADI4U</label>
+                <input
+                  type="text"
+                  id="nadi4uSearchInput"
+                  name="nadi4uSearchInput"
+                  autocomplete="off"
+                  placeholder="Search title, location, keyword..."
+                  oninput="queueNadi4uSearch(this.value)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();applyNadi4uSearch();}"
+                  class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400 text-slate-700"
+                />
+                <button
+                  type="button"
+                  onclick="applyNadi4uSearch()"
+                  class="px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-600 text-[9px] font-bold rounded border border-slate-200 transition-colors"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="filterSection"
+              class="filter-hidden bg-white p-2 rounded-lg border border-slate-200 mb-3 shadow-sm"
+            >
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-[9px] font-bold text-slate-500 uppercase">Date Range</span>
+                <button
+                  id="clearRangeBtn"
+                  onclick="clearRangeFilter()"
+                  class="hidden text-[9px] text-red-500 hover:underline"
+                >
+                  Reset
+                </button>
+              </div>
+              <div class="flex gap-2 items-center">
+                <label for="filterStart" class="sr-only">Start Date</label>
+                <input
+                  type="date"
+                  id="filterStart"
+                  name="filterStart"
+                  autocomplete="off"
+                  onchange="applyRangeFilter()"
+                  class="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-blue-400 text-slate-600"
+                />
+                <span class="text-slate-300 text-[10px]"><i class="fa-solid fa-arrow-right"></i></span>
+                <label for="filterEnd" class="sr-only">End Date</label>
+                <input
+                  type="date"
+                  id="filterEnd"
+                  name="filterEnd"
+                  autocomplete="off"
+                  onchange="applyRangeFilter()"
+                  class="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-blue-400 text-slate-600"
+                />
+              </div>
+            </div>
+            <div id="eventListContainer" class="space-y-4 pb-2 overflow-y-auto max-h-[500px] pr-1"></div>
+            <div id="eventListSkeleton" class="hidden space-y-2 pb-2">
+              <div class="skeleton-event-card bg-white">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="skeleton skeleton-badge"></div>
+                  <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="skeleton skeleton-subtitle"></div>
+                <div class="skeleton skeleton-text w-3/4"></div>
+                <div class="skeleton skeleton-text w-1/2"></div>
+              </div>
+              <div class="skeleton-event-card bg-white">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="skeleton skeleton-badge"></div>
+                  <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="skeleton skeleton-subtitle"></div>
+                <div class="skeleton skeleton-text w-3/4"></div>
+                <div class="skeleton skeleton-text w-1/2"></div>
+              </div>
+              <div class="skeleton-event-card bg-white">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="skeleton skeleton-badge"></div>
+                  <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="skeleton skeleton-subtitle"></div>
+                <div class="skeleton skeleton-text w-3/4"></div>
+                <div class="skeleton skeleton-text w-1/2"></div>
+              </div>
+              <div class="skeleton-event-card bg-white">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="skeleton skeleton-badge"></div>
+                  <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="skeleton skeleton-subtitle"></div>
+                <div class="skeleton skeleton-text w-3/4"></div>
+                <div class="skeleton skeleton-text w-1/2"></div>
+              </div>
+              <div class="skeleton-event-card bg-white">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="skeleton skeleton-badge"></div>
+                  <div class="skeleton skeleton-title"></div>
+                </div>
+                <div class="skeleton skeleton-subtitle"></div>
+                <div class="skeleton skeleton-text w-3/4"></div>
+                <div class="skeleton skeleton-text w-1/2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden" role="dialog">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeSettings()"></div>
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 overflow-y-auto">
+        <div
+          id="settingsModalPanel"
+          class="bg-white rounded-xl shadow-xl w-full max-w-sm flex flex-col mb-10 overflow-hidden min-h-[300px] transition-all duration-300 ease-in-out relative"
+        >
+          <button
+            onclick="closeSettings()"
+            class="absolute top-3 right-3 z-50 w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 hover:text-slate-800 shadow-md transition-colors"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+
+          <div id="settingsMenuView" class="flex flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <h3 class="text-base font-bold text-slate-900">Site Settings</h3>
+            </div>
+
+            <div class="p-4 space-y-2 flex-1">
+              <button
+                onclick="openHeaderSettings()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Edit Header Text</h4>
+                  <p class="text-[10px] text-slate-500">Change site title and location</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+              </button>
+
+              <button
+                onclick="openOffdaySettings()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Manage Offday Calendar</h4>
+                  <p class="text-[10px] text-slate-500">Set Manager & Assistant Manager offdays</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+              </button>
+
+              <button
+                onclick="openSectionList()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Manage Custom Links</h4>
+                  <p class="text-[10px] text-slate-500">Add sections, buttons & columns</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="sectionCountBadge" class="hidden text-[9px] font-bold text-white bg-nadi px-2 py-0.5 rounded-full">0</span>
+                  <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+                </div>
+              </button>
+
+              <button
+                onclick="openHolidaySettings()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Manage Public Holidays</h4>
+                  <p class="text-[10px] text-slate-500">Add & edit holidays on calendar</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+              </button>
+
+              <button
+                onclick="openSchoolHolidaySettings()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">Manage School Holidays</h4>
+                  <p class="text-[10px] text-slate-500">Add & edit school breaks on calendar</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+              </button>
+
+              <button
+                onclick="openNADI4USettings()"
+                class="w-full text-left px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-nadi hover:bg-slate-50 transition-all flex justify-between items-center group"
+              >
+                <div>
+                  <h4 class="text-sm font-bold text-slate-800">NADI4U API Settings</h4>
+                  <p class="text-[10px] text-slate-500">Configure Smart Services sync</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-nadi text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="headerSettingsView" class="hidden flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex items-center gap-2">
+                <button onclick="backToMenu()" class="text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900">Header Text</h3>
+              </div>
+            </div>
+
+            <div class="p-6 space-y-4">
+              <div>
+                <label for="settingSiteTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1"
+                  >Main Title</label
+                >
+                <input
+                  type="text"
+                  id="settingSiteTitle"
+                  name="settingSiteTitle"
+                  autocomplete="off"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-sm outline-none focus:border-nadi"
+                  placeholder="NADI SCSB"
+                />
+              </div>
+              <div>
+                <label for="settingSiteSubtitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Subtitle</label>
+                <input
+                  type="text"
+                  id="settingSiteSubtitle"
+                  name="settingSiteSubtitle"
+                  autocomplete="off"
+                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-sm outline-none focus:border-nadi"
+                  placeholder="PULAU PINANG"
+                />
+              </div>
+            </div>
+
+            <div class="px-4 py-4 border-t border-slate-100 bg-slate-50 flex justify-end mt-auto">
+              <button
+                onclick="saveHeaderSettings()"
+                class="px-5 py-1.5 bg-nadi hover:bg-[#1b1d8a] text-white text-xs font-bold rounded shadow transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          <div id="sectionsListView" class="hidden flex-col h-full w-full">
+            <div
+              class="px-5 py-4 border-b-2 border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-slate-100"
+            >
+              <div class="flex items-center gap-3">
+                <button
+                  onclick="backToMenu()"
+                  class="w-8 h-8 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 shadow-sm transition-colors"
+                >
+                  <i class="fa-solid fa-arrow-left text-sm"></i>
+                </button>
+                <div>
+                  <h3 class="text-lg font-bold text-slate-900">Custom Link Sections</h3>
+                  <p class="text-[10px] text-slate-500 font-semibold">Manage your button groups</p>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  onclick="openSectionEditor()"
+                  class="text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-4 py-2 rounded-lg shadow-md flex items-center gap-2"
+                >
+                  <i class="fa-solid fa-plus"></i> New Section
+                </button>
+              </div>
+            </div>
+
+            <div class="p-5 flex-1 overflow-y-auto bg-slate-50">
+              <div id="settingsSectionList" class="space-y-3 max-h-[400px]"></div>
+            </div>
+          </div>
+
+          <div id="sectionEditorView" class="hidden flex-col w-full bg-white max-h-[85vh]">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
+              <div class="flex items-center gap-2">
+                <button onclick="backToSectionList()" class="text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900" id="sectionEditorTitle">Edit Section</h3>
+              </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4">
+              <input type="hidden" id="editSectionId" />
+
+              <div class="bg-slate-50 rounded-lg border border-slate-200 p-3 mb-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label for="editSectionHeader" class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Section Title</label>
+                    <input
+                      type="text"
+                      id="editSectionHeader"
+                      name="editSectionHeader"
+                      autocomplete="off"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-sm font-semibold outline-none focus:border-blue-400"
+                      placeholder="e.g. Quick Links"
+                    />
+                  </div>
+                  <div>
+                    <label for="editSectionCols" class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Columns</label>
+                    <select
+                      id="editSectionCols"
+                      name="editSectionCols"
+                      onchange="renderColumnEditors()"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-sm font-semibold outline-none focus:border-blue-400 cursor-pointer"
+                    >
+                      <option value="1">1 Col</option>
+                      <option value="2">2 Cols</option>
+                      <option value="3">3 Cols</option>
+                      <option value="4">4 Cols</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="columnEditorsContainer" class="grid gap-3"></div>
+            </div>
+
+            <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
+              <button
+                onclick="deleteSection()"
+                id="btnDeleteSection"
+                class="text-xs font-bold text-red-600 hover:text-red-700 px-2"
+              >
+                <i class="fa-solid fa-trash mr-1"></i> Delete
+              </button>
+              <button
+                onclick="saveSectionLocal()"
+                class="text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded shadow"
+              >
+                <i class="fa-solid fa-check mr-1"></i> Save
+              </button>
+            </div>
+          </div>
+
+          <div id="offdaySettingsView" class="hidden flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <button onclick="backToMenu()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-arrow-left"></i>
+                  </button>
+                  <h3 class="text-base font-bold text-slate-900">Offday Calendar</h3>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100">
+              <div class="flex items-center justify-center gap-2">
+                <button onclick="changeOffdayMonth(-1)" class="w-6 h-6 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                  <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <span id="offdayMonthLabel" class="text-xs font-bold text-slate-700 min-w-[120px] text-center"></span>
+                <button onclick="changeOffdayMonth(1)" class="w-6 h-6 rounded hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                  <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-[#00aff0]/10 border-b border-[#00aff0]/20 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-1 rounded-sm bg-[#00aff0]"></span>
+                    <span class="text-xs font-bold text-slate-800">Manager (M) Offdays</span>
+                  </div>
+                  <span id="managerOffdayCount" class="text-[10px] font-semibold text-slate-500">0 dates</span>
+                </div>
+                <div class="p-3">
+                  <div id="offdayManagerCalendar" class="grid grid-cols-7 gap-1 text-center mb-2"></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-[#90cf53]/15 border-b border-[#90cf53]/25 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-1 rounded-sm bg-[#90cf53]"></span>
+                    <span class="text-xs font-bold text-slate-800">Assistant Manager (AM) Offdays</span>
+                  </div>
+                  <span id="amOffdayCount" class="text-[10px] font-semibold text-slate-500">0 dates</span>
+                </div>
+                <div class="p-3">
+                  <div id="offdayAMCalendar" class="grid grid-cols-7 gap-1 text-center mb-2"></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-[#00aff0]/15 border-b border-[#00aff0]/25 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-1 rounded-sm bg-[#00aff0]" style="box-shadow: 0 0 3px #00aff0;"></span>
+                    <span class="text-xs font-bold text-slate-800">Manager (M) Replacement</span>
+                  </div>
+                  <span id="managerReplacementCount" class="text-[10px] font-semibold text-slate-500">0 dates</span>
+                </div>
+                <div class="p-3">
+                  <div id="offdayManagerReplacementCalendar" class="grid grid-cols-7 gap-1 text-center mb-2"></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-[#90cf53]/15 border-b border-[#90cf53]/25 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-1 rounded-sm bg-[#90cf53]" style="box-shadow: 0 0 3px #90cf53;"></span>
+                    <span class="text-xs font-bold text-slate-800">Assistant Manager (AM) Replacement</span>
+                  </div>
+                  <span id="amReplacementCount" class="text-[10px] font-semibold text-slate-500">0 dates</span>
+                </div>
+                <div class="p-3">
+                  <div id="offdayAMReplacementCalendar" class="grid grid-cols-7 gap-1 text-center mb-2"></div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                <div class="text-[9px] font-bold text-slate-500 uppercase mb-2">Legend</div>
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-3 rounded bg-[#00aff0]"></span>
+                    <span class="text-slate-600">M Offday (click to toggle)</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-3 rounded bg-[#90cf53]"></span>
+                    <span class="text-slate-600">AM Offday (click to toggle)</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-1.5 rounded bg-[#00aff0]" style="box-shadow: 0 0 2px #00aff0;"></span>
+                    <span class="text-slate-600">M Replacement</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-1.5 rounded bg-[#90cf53]" style="box-shadow: 0 0 2px #90cf53;"></span>
+                    <span class="text-slate-600">AM Replacement</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-[9px] text-slate-400 text-center">Click on dates to toggle offdays. Selected dates will appear on the calendar.</p>
+            </div>
+
+            <div class="px-4 py-4 border-t border-slate-100 bg-slate-50 flex justify-end mt-auto">
+              <button
+                onclick="saveOffdaySettings()"
+                class="px-5 py-1.5 bg-nadi hover:bg-[#1b1d8a] text-white text-xs font-bold rounded shadow transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          <div id="holidaySettingsView" class="hidden flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex items-center gap-2">
+                <button onclick="backToMenu()" class="text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900">Public Holidays</h3>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+                    <span class="text-xs font-bold text-slate-800">Add New Holiday</span>
+                  </div>
+                  <span id="holidayCount" class="text-[10px] font-semibold text-slate-500">0 holidays</span>
+                </div>
+                <div class="p-3 space-y-2">
+                  <div>
+                    <label for="holidayName" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Holiday Name</label>
+                    <input
+                      type="text"
+                      id="holidayName"
+                      name="holidayName"
+                      autocomplete="off"
+                      class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                      placeholder="e.g. Hari Raya Puasa"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 items-end">
+                    <div>
+                      <label for="holidayDate" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Date</label>
+                      <input
+                        type="date"
+                        id="holidayDate"
+                        name="holidayDate"
+                        autocomplete="off"
+                        class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <button
+                      onclick="addPublicHoliday()"
+                      class="py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold rounded transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-slate-100 border-b border-slate-200">
+                  <span class="text-xs font-bold text-slate-800">Holiday List</span>
+                </div>
+                <div class="p-3">
+                  <div id="holidayList" class="space-y-1 max-h-[200px] overflow-y-auto"></div>
+                  <div id="noHolidayMessage" class="text-center py-4 text-[10px] text-slate-400">
+                    No holidays added yet.
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-[9px] text-slate-400 text-center">Holidays will appear on the calendar with a gray circle indicator.</p>
+            </div>
+
+            <div class="px-4 py-4 border-t border-slate-100 bg-slate-50 flex justify-end mt-auto">
+              <button
+                onclick="saveHolidaySettings()"
+                class="px-5 py-1.5 bg-nadi hover:bg-[#1b1d8a] text-white text-xs font-bold rounded shadow transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          <div id="schoolHolidaySettingsView" class="hidden flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex items-center gap-2">
+                <button onclick="backToMenu()" class="text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900">School Holidays</h3>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-amber-100 border-b border-amber-200 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                    <span class="text-xs font-bold text-amber-800">Add New School Holiday</span>
+                  </div>
+                  <span id="schoolHolidayCount" class="text-[10px] font-semibold text-amber-600">0 holidays</span>
+                </div>
+                <div class="p-3 space-y-2">
+                  <div>
+                    <label for="schoolHolidayName" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Holiday Name</label>
+                    <input
+                      type="text"
+                      id="schoolHolidayName"
+                      name="schoolHolidayName"
+                      autocomplete="off"
+                      class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                      placeholder="e.g. Cuti Penggal 1"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label for="schoolHolidayStart" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        id="schoolHolidayStart"
+                        name="schoolHolidayStart"
+                        autocomplete="off"
+                        class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label for="schoolHolidayEnd" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">End Date</label>
+                      <input
+                        type="date"
+                        id="schoolHolidayEnd"
+                        name="schoolHolidayEnd"
+                        autocomplete="off"
+                        class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onclick="addSchoolHoliday()"
+                    class="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-3 py-2 bg-amber-100 border-b border-amber-200">
+                  <span class="text-xs font-bold text-amber-800">School Holiday List</span>
+                </div>
+                <div class="p-3">
+                  <div id="schoolHolidayList" class="space-y-1 max-h-[200px] overflow-y-auto"></div>
+                  <div id="noSchoolHolidayMessage" class="text-center py-4 text-[10px] text-slate-400">
+                    No school holidays added yet.
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-[9px] text-slate-400 text-center">School holidays will appear on the calendar with a yellow background.</p>
+            </div>
+
+            <div class="px-4 py-4 border-t border-slate-100 bg-slate-50 flex justify-end mt-auto">
+              <button
+                onclick="saveSchoolHolidaySettings()"
+                class="px-5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded shadow"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+
+          <!-- NADI4U Settings View -->
+          <div id="nadi4uSettingsView" class="hidden flex-col h-full w-full">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <div class="flex items-center gap-2">
+                <button onclick="backToMenu()" class="text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900">NADI4U Login</h3>
+              </div>
+            </div>
+
+            <!-- Logged Out View -->
+            <div id="nadi4uLoginView" class="p-4 space-y-4 flex-1 overflow-y-auto">
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-[10px] text-blue-800">
+                  <i class="fa-solid fa-info-circle mr-1"></i>
+                  Login with your NADI4U account to sync Smart Services schedule automatically.
+                </p>
+              </div>
+
+              <div>
+                <label for="nadi4uEmail" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Email</label>
+                <input
+                  type="email"
+                  id="nadi4uEmail"
+                  autocomplete="email"
+                  class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                  placeholder="your.email@nadi.my"
+                />
+              </div>
+
+              <div>
+                <label for="nadi4uPassword" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Password</label>
+                <input
+                  type="password"
+                  id="nadi4uPassword"
+                  autocomplete="current-password"
+                  class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                  placeholder="Your NADI4U password"
+                />
+              </div>
+
+              <button
+                onclick="loginNADI4U(event)"
+                class="w-full px-3 py-2 bg-nadi hover:bg-nadi-hover text-white text-[10px] font-bold rounded shadow"
+              >
+                <i class="fa-solid fa-sign-in-alt mr-1"></i> Login to NADI4U
+              </button>
+
+              <div class="border-t border-slate-200 pt-4">
+                <p class="text-[9px] text-slate-500 text-center mb-2">Or enter API credentials manually:</p>
+                <div>
+                  <label for="nadi4uApiKey" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">API Key</label>
+                  <input
+                    type="text"
+                    id="nadi4uApiKey"
+                    autocomplete="off"
+                    class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                    placeholder="Paste apikey from browser"
+                  />
+                </div>
+
+                <div class="mt-2">
+                  <label for="nadi4uToken" class="text-[9px] font-bold text-slate-400 uppercase block mb-1">Authorization Token</label>
+                  <input
+                    type="password"
+                    id="nadi4uToken"
+                    autocomplete="off"
+                    class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] outline-none focus:border-slate-400"
+                    placeholder="Paste Bearer token from browser"
+                  />
+                </div>
+
+                <button
+                  onclick="saveNADI4USettings()"
+                  class="w-full mt-2 px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-bold rounded shadow"
+                >
+                  Save Manual Credentials
+                </button>
+              </div>
+            </div>
+
+            <!-- Logged In View -->
+            <div id="nadi4uLoggedInView" class="hidden p-4 space-y-4 flex-1 overflow-y-auto">
+              <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div class="flex items-center gap-2 mb-1">
+                  <i class="fa-solid fa-check-circle text-green-600"></i>
+                  <span class="text-[10px] font-bold text-green-800">Logged in to NADI4U</span>
+                </div>
+                <p id="nadi4uUserEmail" class="text-[9px] text-green-700"></p>
+              </div>
+
+              <div class="flex gap-2">
+                <button
+                  onclick="testNADI4UConnection()"
+                  class="flex-1 px-3 py-2 bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-bold rounded shadow"
+                >
+                  <i class="fa-solid fa-plug mr-1"></i> Test
+                </button>
+                <button
+                  onclick="syncNADI4UData()"
+                  class="flex-1 px-3 py-2 bg-nadi hover:bg-nadi-hover text-white text-[10px] font-bold rounded shadow"
+                >
+                  <i class="fa-solid fa-sync mr-1"></i> Sync Now
+                </button>
+              </div>
+
+              <div id="nadi4uStatus" class="hidden p-3 rounded-lg text-[10px]"></div>
+
+              <div id="nadi4uDataPreview" class="hidden">
+                <div class="text-[9px] font-bold text-slate-400 uppercase mb-2">Data Preview</div>
+                <div class="bg-slate-100 rounded p-2 max-h-40 overflow-auto">
+                  <pre id="nadi4uPreviewContent" class="text-[9px] text-slate-600 whitespace-pre-wrap"></pre>
+                </div>
+              </div>
+
+              <button
+                onclick="logoutNADI4U()"
+                class="w-full px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold rounded border border-red-200"
+              >
+                <i class="fa-solid fa-sign-out-alt mr-1"></i> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="eventModal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" id="modalBackdrop"></div>
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-10 px-4 overflow-y-auto">
+        <div
+          class="bg-white rounded-xl shadow-xl w-full max-w-sm transform transition-all scale-95 opacity-0 flex flex-col mb-10"
+          id="modalPanel"
+        >
+          <div
+            class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-xl"
+          >
+            <h3 class="text-base font-bold text-slate-900" id="modalTitle">New Program</h3>
+            <button
+              type="button"
+              class="lm-tab"
+              onclick="closeModal()"
+            >
+              <i class="fa-solid fa-xmark"></i>
+              <span>Close</span>
+            </button>
+          </div>
+          <div class="p-4 space-y-3">
+            <form id="eventForm" class="space-y-3">
+              <input type="hidden" id="eventId" name="eventId" />
+              <div id="categorySection">
+                <div aria-label="Program Category" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1.5">Category</div>
+                <div class="grid grid-cols-2 gap-1.5" id="categoryGrid">
+                  <label class="relative cursor-pointer group block">
+                    <input type="radio" id="categoryEntrepreneur" name="category" value="entrepreneur" class="peer sr-only cat-radio" />
+                    <div
+                      class="px-2 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 peer-checked:text-yellow-700 peer-checked:border-yellow-400 peer-checked:bg-yellow-50 transition-all h-full flex flex-col justify-center relative overflow-hidden"
+                    >
+                      <div class="flex items-center gap-1.5 mb-0.5 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0"></span>
+                        <span class="text-[10px] font-bold uppercase leading-none">Entrepreneurship</span>
+                      </div>
+                      <span class="block text-[8px] opacity-70 leading-tight pl-3">Keusahawanan</span>
+                      <i
+                        class="fa-solid fa-check text-yellow-500 text-[10px] opacity-0 check-icon absolute top-1 right-1"
+                      ></i>
+                    </div>
+                  </label>
+                  <label class="relative cursor-pointer group block">
+                    <input type="radio" id="categoryWellbeing" name="category" value="wellbeing" class="peer sr-only cat-radio" />
+                    <div
+                      class="px-2 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 peer-checked:text-emerald-600 peer-checked:border-emerald-400 peer-checked:bg-emerald-50 transition-all h-full flex flex-col justify-center relative overflow-hidden"
+                    >
+                      <div class="flex items-center gap-1.5 mb-0.5 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="text-[10px] font-bold uppercase leading-none">Wellbeing</span>
+                      </div>
+                      <span class="block text-[8px] opacity-70 leading-tight pl-3">Kesejahteraan Kendiri</span>
+                      <i
+                        class="fa-solid fa-check text-emerald-500 text-[10px] opacity-0 check-icon absolute top-1 right-1"
+                      ></i>
+                    </div>
+                  </label>
+                  <label class="relative cursor-pointer group block">
+                    <input type="radio" id="categoryAwareness" name="category" value="awareness" class="peer sr-only cat-radio" />
+                    <div
+                      class="px-2 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 peer-checked:text-violet-600 peer-checked:border-violet-400 peer-checked:bg-violet-50 transition-all h-full flex flex-col justify-center relative overflow-hidden"
+                    >
+                      <div class="flex items-center gap-1.5 mb-0.5 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+                        <span class="text-[10px] font-bold uppercase leading-none">Awareness</span>
+                      </div>
+                      <span class="block text-[8px] opacity-70 leading-tight pl-3">Kesedaran</span>
+                      <i
+                        class="fa-solid fa-check text-violet-500 text-[10px] opacity-0 check-icon absolute top-1 right-1"
+                      ></i>
+                    </div>
+                  </label>
+                  <label class="relative cursor-pointer group block">
+                    <input type="radio" id="categoryGov" name="category" value="gov" class="peer sr-only cat-radio" />
+                    <div
+                      class="px-2 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 peer-checked:text-red-600 peer-checked:border-red-400 peer-checked:bg-red-50 transition-all h-full flex flex-col justify-center relative overflow-hidden"
+                    >
+                      <div class="flex items-center gap-1.5 mb-0.5 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                        <span class="text-[10px] font-bold uppercase leading-none">Gov Initiative</span>
+                      </div>
+                      <span class="block text-[8px] opacity-70 leading-tight pl-3">Inisiatif Kerajaan</span>
+                      <i
+                        class="fa-solid fa-check text-red-500 text-[10px] opacity-0 check-icon absolute top-1 right-1"
+                      ></i>
+                    </div>
+                  </label>
+                  <label class="relative cursor-pointer group block col-span-2 flex justify-center">
+                    <input type="radio" id="categoryLearning" name="category" value="learning" class="peer sr-only cat-radio" />
+                    <div
+                      class="w-[220px] px-2 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-50 peer-checked:text-blue-600 peer-checked:border-blue-400 peer-checked:bg-blue-50 transition-all h-full flex flex-col justify-center relative overflow-hidden"
+                    >
+                      <div class="flex items-center gap-1.5 mb-0.5 relative z-10">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-[10px] font-bold uppercase leading-none whitespace-nowrap"
+                          >Lifelong Learning</span
+                        >
+                      </div>
+                      <span class="block text-[8px] opacity-70 leading-tight pl-3">Pembelajaran Sepanjang Hayat</span>
+                      <i
+                        class="fa-solid fa-check text-blue-500 text-[10px] opacity-0 check-icon absolute top-1 right-1"
+                      ></i>
+                    </div>
+                  </label>
+                </div>
+                <!-- Category Error Text -->
+                <div id="categoryErrorText" class="hidden category-error-text" style="display: none;">
+                  *Please select a Category.
+                </div>
+              </div> <!-- End of categorySection -->
+              <div id="subcategorySection" class="mt-2 hidden col-span-2">
+                <label for="subcategory" class="text-[8px] font-bold text-slate-400 uppercase tracking-wide block mb-1"
+                  >Sub-Category</label
+                >
+                <select
+                  id="subcategory"
+                  name="subcategory"
+                  class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-[10px] font-semibold text-slate-600 focus:border-slate-400 outline-none"
+                >
+                  <option value="">-- Select Sub-Category --</option>
+                </select>
+              </div>
+              <div>
+                <label for="eventTitle" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1"
+                  >Title <span class="text-red-500">*</span></label
+                >
+                <input
+                  type="text"
+                  id="eventTitle"
+                  name="eventTitle"
+                  required
+                  autocomplete="off"
+                  class="w-full px-3 py-2 bg-[#eff6ff] border border-slate-200 rounded text-sm font-semibold text-slate-800 focus:border-slate-400 focus:ring-0 outline-none"
+                  placeholder="Nama Program"
+                />
+              </div>
+              <div>
+                <div class="text-[9px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Program Info (Optional)</div>
+                <div id="programInfoContainer">
+                  <button
+                    type="button"
+                    onclick="openRichTextEditor()"
+                    class="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600 hover:bg-blue-100 text-left flex items-center justify-between"
+                  >
+                    <span id="programInfoPreview" class="truncate flex-1">Click to edit details</span>
+                    <i class="fa-solid fa-pen-to-square text-slate-400 text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="startDate" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1"
+                    >Start Date</label
+                  >
+                  <input
+                    type="text"
+                    id="startDate"
+                    name="startDate"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    maxlength="10"
+                    pattern="\d{2}/\d{2}/\d{4}"
+                    placeholder="dd/mm/yyyy"
+                    class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs focus:border-slate-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label for="endDate" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1">End Date</label>
+                  <input
+                    type="text"
+                    id="endDate"
+                    name="endDate"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    maxlength="10"
+                    pattern="\d{2}/\d{2}/\d{4}"
+                    placeholder="dd/mm/yyyy"
+                    class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs focus:border-slate-400 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div aria-label="Time Selection" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Time</div>
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] text-slate-500 font-semibold w-10">Start</span>
+                    <label for="timeHour" class="sr-only">Start Hour</label>
+                    <select
+                      id="timeHour"
+                      name="timeHour"
+                      onchange="updateEndTime()"
+                      class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                    ></select>
+                    <span class="text-slate-400 text-xs">:</span>
+                    <label for="timeMinute" class="sr-only">Start Minute</label>
+                    <select
+                      id="timeMinute"
+                      name="timeMinute"
+                      onchange="updateEndTime()"
+                      class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                    >
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                    <label for="timeAMPM" class="sr-only">AM/PM</label>
+                    <select
+                      id="timeAMPM"
+                      name="timeAMPM"
+                      onchange="updateEndTime()"
+                      class="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-bold w-16"
+                    >
+                      <option value="AM" selected>AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] text-slate-500 font-semibold w-10">End</span>
+                    <label for="endTimeHour" class="sr-only">End Hour</label>
+                     <select
+                       id="endTimeHour"
+                       name="endTimeHour"
+                       class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                     ></select>
+                    <span class="text-slate-400 text-xs">:</span>
+                    <label for="endTimeMinute" class="sr-only">End Minute</label>
+                    <select
+                      id="endTimeMinute"
+                      name="endTimeMinute"
+                      class="px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                    >
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                    <label for="endTimeAMPM" class="sr-only">AM/PM</label>
+                     <select
+                       id="endTimeAMPM"
+                       name="endTimeAMPM"
+                       class="px-2 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs outline-none text-center font-bold w-16"
+                     >
+                       <option value="AM">AM</option>
+                       <option value="PM" selected>PM</option>
+                     </select>
+                  </div>
+                  
+                  <div class="mt-1 pt-1 border-t border-dashed border-slate-200">
+                    <label class="flex items-center gap-2 cursor-pointer mb-1.5">
+                      <input
+                        type="checkbox"
+                        id="hasSecondSession"
+                        name="hasSecondSession"
+                        onchange="toggleSecondSession()"
+                        class="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span class="text-[9px] font-semibold text-slate-600">Add Second Session</span>
+                    </label>
+                    <div id="secondSessionContainer" class="flex flex-col gap-2 pl-4 hidden">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] text-slate-500 font-semibold w-10">Start</span>
+                        <label for="time2Hour" class="sr-only">Session 2 Start Hour</label>
+                        <select
+                          id="time2Hour"
+                          name="time2Hour"
+                          onchange="updateEndTime2()"
+                          class="px-1.5 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                        >
+                          <option value="" selected>-</option>
+                        </select>
+                        <span class="text-slate-400 text-xs">:</span>
+                        <label for="time2Minute" class="sr-only">Session 2 Start Minute</label>
+                        <select
+                          id="time2Minute"
+                          name="time2Minute"
+                          onchange="updateEndTime2()"
+                          class="px-1.5 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                        >
+                          <option value="00">00</option>
+                          <option value="15">15</option>
+                          <option value="30">30</option>
+                          <option value="45">45</option>
+                        </select>
+                        <label for="time2AMPM" class="sr-only">Session 2 AM/PM</label>
+                        <select
+                          id="time2AMPM"
+                          name="time2AMPM"
+                          onchange="updateEndTime2()"
+                          class="px-2 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-bold w-16"
+                        >
+                          <option value="AM">AM</option>
+                          <option value="PM">PM</option>
+                        </select>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] text-slate-500 font-semibold w-10">End</span>
+                        <label for="endTime2Hour" class="sr-only">Session 2 End Hour</label>
+                        <select
+                          id="endTime2Hour"
+                          name="endTime2Hour"
+                          class="px-1.5 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                        >
+                          <option value="" selected>-</option>
+                        </select>
+                        <span class="text-slate-400 text-xs">:</span>
+                        <label for="endTime2Minute" class="sr-only">Session 2 End Minute</label>
+                        <select
+                          id="endTime2Minute"
+                          name="endTime2Minute"
+                          class="px-1.5 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-mono w-12"
+                        >
+                          <option value="00">00</option>
+                          <option value="15">15</option>
+                          <option value="30">30</option>
+                          <option value="45">45</option>
+                        </select>
+                        <label for="endTime2AMPM" class="sr-only">Session 2 End AM/PM</label>
+                        <select
+                          id="endTime2AMPM"
+                          name="endTime2AMPM"
+                          class="px-2 py-1.5 bg-white border border-slate-200 rounded text-xs outline-none text-center font-bold w-16"
+                        >
+                          <option value="AM">AM</option>
+                          <option value="PM">PM</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Registration Link Section -->
+              <div class="mt-3">
+                <div aria-label="Registration Link Section" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Registration Link</div>
+                <div id="registrationLinksContainer" class="space-y-1.5 mb-2"></div>
+                <button
+                  type="button"
+                  onclick="addRegistrationLink()"
+                  class="w-full py-1 text-[10px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded border border-blue-100 transition-colors"
+                >
+                  + Add Registration Link
+                </button>
+              </div>
+
+              <!-- Submit Link Section -->
+              <div class="mt-3">
+                <div aria-label="Submit Link Section" class="text-[9px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Submit Link</div>
+                <div id="submitLinksContainer" class="space-y-1.5 mb-2"></div>
+                <button
+                  type="button"
+                  onclick="addSubmitLink()"
+                  class="w-full py-1 text-[10px] font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded border border-green-100 transition-colors"
+                >
+                  + Add Submit Link
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="px-4 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-2">
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onclick="saveEvent()"
+              class="px-5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded shadow transition-transform active:scale-95"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="richTextModal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeRichTextModal()"></div>
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 overflow-y-auto">
+        <div
+          class="bg-white rounded-xl shadow-xl w-full max-w-lg flex flex-col mb-10 transform transition-all scale-95 opacity-0"
+          id="richTextPanel"
+        >
+          <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-xl">
+            <h3 class="text-base font-bold text-slate-900">Edit Program Info</h3>
+            <button
+              onclick="closeRichTextModal()"
+              class="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-500"
+            >
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+
+          <div class="px-4 py-2 border-b border-slate-100 bg-white">
+            <div class="flex flex-wrap gap-1 items-center">
+              <button
+                type="button"
+                onclick="execFormat('bold')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Bold"
+              >
+                <i class="fa-solid fa-bold text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onclick="execFormat('italic')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Italic"
+              >
+                <i class="fa-solid fa-italic text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onclick="execFormat('underline')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Underline"
+              >
+                <i class="fa-solid fa-underline text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onclick="execFormat('strikeThrough')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Strikethrough"
+              >
+                <i class="fa-solid fa-strikethrough text-xs"></i>
+              </button>
+              <div class="w-px h-6 bg-slate-200 mx-1"></div>
+              <div class="relative">
+                <label for="programInfoFontSize" class="sr-only">Font Size</label>
+                <select
+                  id="programInfoFontSize"
+                  name="programInfoFontSize"
+                  onchange="changeFontSize(this.value)"
+                  class="px-2 py-1 h-7 bg-white border border-slate-200 rounded text-[10px] font-semibold outline-none cursor-pointer text-slate-600"
+                >
+                  <option value="" disabled>Size</option>
+                  <option value="8">8px</option>
+                  <option value="8.5">8.5px</option>
+                  <option value="9">9px</option>
+                  <option value="10">10px</option>
+                  <option value="10.5" selected>10.5px (Default)</option>
+                  <option value="11">11px</option>
+                  <option value="11.5">11.5px</option>
+                  <option value="12">12px</option>
+                </select>
+              </div>
+              <div class="w-px h-6 bg-slate-200 mx-1"></div>
+              <button
+                type="button"
+                onclick="execFormat('insertUnorderedList')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Bullet List"
+              >
+                <i class="fa-solid fa-list-ul text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onclick="execFormat('insertOrderedList')"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors"
+                title="Numbered List"
+              >
+                <i class="fa-solid fa-list-ol text-xs"></i>
+              </button>
+              <div class="w-px h-6 bg-slate-200 mx-1"></div>
+              <button
+                type="button"
+                onclick="insertLink()"
+                class="w-7 h-7 rounded hover:bg-slate-100 text-blue-600 flex items-center justify-center transition-colors"
+                title="Insert Link"
+              >
+                <i class="fa-solid fa-link text-xs"></i>
+              </button>
+              <div class="w-px h-6 bg-slate-200 mx-1"></div>
+              <button
+                type="button"
+                onclick="clearFormatting()"
+                class="px-2 h-7 rounded hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors text-[10px] font-semibold"
+                title="Clear Formatting"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onclick="confirmRemoveInfo()"
+                class="ml-auto px-2 h-7 rounded hover:bg-red-50 text-red-500 flex items-center justify-center transition-colors text-[10px] font-semibold"
+                title="Remove All"
+              >
+                <i class="fa-solid fa-trash-can mr-1"></i> Remove
+              </button>
+            </div>
+          </div>
+
+          <div class="p-4">
+            <div
+              id="richTextEditor"
+              contenteditable="true"
+              role="textbox"
+              aria-multiline="true"
+              aria-label="Program details editor"
+              class="w-full min-h-[150px] max-h-[300px] px-3 py-2 bg-white border border-slate-200 rounded text-xs text-slate-700 focus:border-blue-400 outline-none overflow-y-auto"
+              placeholder="Enter program details here..."
+            ></div>
+            <div id="programInfoImagesSection" class="mt-3">
+              <div
+                id="programInfoImageDropzone"
+                class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-center transition-colors"
+                ondragover="programHandleImageDragOver(event)"
+                ondragleave="programHandleImageDragLeave(event)"
+                ondrop="programHandleImageDrop(event)"
+              >
+                <p class="text-[10px] font-semibold text-slate-600">Drag &amp; drop image here</p>
+                <p class="text-[9px] text-slate-400">or click to upload</p>
+                <button
+                  id="programInfoImagesButton"
+                  type="button"
+                  onclick="programTriggerImagePicker()"
+                  class="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <i class="fa-regular fa-image"></i>
+                  Add Picture
+                </button>
+                <input
+                  id="programInfoImages"
+                  name="programInfoImages"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  class="hidden"
+                  onchange="programHandleImageSelection(this)"
+                />
+                <p id="programInfoImagesDisabledNote" class="hidden text-[10px] text-red-500 mt-2">Images are disabled until the `images` column exists in Supabase.</p>
+              </div>
+              <div id="programInfoImagePreview" class="grid grid-cols-3 gap-2 mt-2"></div>
+            </div>
+            <p class="text-[9px] text-slate-400 mt-1">Tip: Use the toolbar above to format text. Pasted images are moved to Program Images automatically.</p>
+          </div>
+
+          <div class="px-4 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-2">
+            <button
+              type="button"
+              onclick="closeRichTextModal()"
+              class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onclick="saveRichText()"
+              class="px-5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded shadow transition-transform active:scale-95"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="programImageModal" class="fixed inset-0 z-[60] hidden" onclick="handleProgramImageOverlayClick(event)">
+      <div id="programImageBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+      <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div id="programImagePanel" class="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden">
+          <div id="programImageHeader" class="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <h3 class="text-sm font-bold text-slate-900">Image Preview</h3>
+            <button type="button" onclick="closeProgramImageViewer()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+          <div id="programImageStage" class="p-4 bg-slate-50 flex items-center justify-center">
+            <div id="programImageFrame" class="relative inline-flex max-w-full">
+              <img id="programImagePreviewLarge" src="" alt="Program image" class="max-h-[80vh] max-w-full w-auto rounded border border-slate-200 bg-white" />
+              <button id="programImagePrev" onclick="showPrevProgramImage()" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <button id="programImageNext" onclick="showNextProgramImage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+              <button id="programImageFullscreen" onclick="toggleProgramImageFullscreen()" class="absolute right-2 bottom-2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors" aria-label="Toggle full view">
+                <i id="programImageFullscreenIcon" class="fa-solid fa-expand"></i>
+              </button>
+            </div>
+          </div>
+          <div id="programImageFooter" class="px-4 py-3 border-t border-slate-100 bg-white flex flex-wrap items-center justify-between gap-2">
+            <span id="programImageCounter" class="text-[11px] text-slate-500 font-semibold"></span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="copyProgramImage()" class="px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md">Copy</button>
+              <button type="button" onclick="downloadProgramImage()" class="px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md">Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+      <div class="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 overflow-y-auto">
+        <div
+          class="bg-white rounded-xl shadow-xl w-full max-w-xs transform transition-all scale-95 opacity-0"
+          id="deleteModalPanel"
+        >
+          <div class="p-5 text-center">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-trash text-red-600 text-lg"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 mb-1">Delete Program?</h3>
+            <p class="text-xs text-slate-500 mb-4">This action cannot be undone.</p>
+
+            <div class="flex gap-2">
+              <button
+                onclick="closeDeleteModal()"
+                class="flex-1 px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onclick="confirmDelete()"
+                class="flex-1 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+      <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div
+          class="bg-white rounded-xl shadow-xl w-full max-w-xs transform transition-all scale-95 opacity-0"
+          id="confirmModalPanel"
+        >
+          <div class="p-5 text-center">
+            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 mb-1">Remove Program Info?</h3>
+            <p class="text-xs text-slate-500 mb-4">This will delete all program information.</p>
+
+            <div class="flex gap-2">
+              <button
+                onclick="closeConfirmModal()"
+                class="flex-1 px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onclick="removeInfoConfirmed()"
+                class="flex-1 px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="urlInputModal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeUrlInputModal()"></div>
+      <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div
+          class="bg-white rounded-xl shadow-xl w-full max-w-sm transform transition-all scale-95 opacity-0"
+          id="urlInputPanel"
+        >
+          <div class="px-4 py-3 border-b border-b-2 border-slate-200 flex justify-between items-center bg-slate-50/50 rounded-t-xl">
+            <h3 class="text-base font-bold text-slate-900">Insert Link</h3>
+            <button
+              onclick="closeUrlInputModal()"
+              class="w-6 h-6 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-500"
+            >
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+          <div class="p-4 space-y-3">
+            <div>
+              <label for="linkTextField" class="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Display Text</label>
+              <input
+                type="text"
+                id="linkTextField"
+                name="linkTextField"
+                autocomplete="off"
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-xs outline-none focus:border-blue-400"
+                placeholder="Click here (leave empty to use URL)"
+              />
+            </div>
+            <div>
+              <label for="urlInputField" class="text-[10px] font-bold text-slate-500 uppercase tracking-wide block mb-1.5">URL <span class="text-red-500">*</span></label>
+              <input
+                type="url"
+                id="urlInputField"
+                name="urlInputField"
+                autocomplete="off"
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded text-xs outline-none focus:border-blue-400"
+                placeholder="https://example.com"
+                onkeydown="if(event.key==='Enter') confirmInsertLink()"
+              />
+            </div>
+          </div>
+          <div class="px-4 py-3 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-end gap-2">
+            <button
+              type="button"
+              onclick="closeUrlInputModal()"
+              class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onclick="confirmInsertLink()"
+              class="px-5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded shadow"
+            >
+              Insert
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reminder Panel -->
+    <div id="reminderOverlay" class="reminder-overlay" aria-hidden="true">
+      <div class="reminder-backdrop" onclick="closeReminderPanel()" aria-hidden="true"></div>
+      <div class="reminder-dialog" role="dialog" aria-modal="true" aria-labelledby="reminderDialogTitle">
+        <div class="reminder-shell">
+          <header class="reminder-dialog-header">
+            <div>
+              <p class="reminder-eyebrow">Reminders</p>
+              <h2 id="reminderDialogTitle" class="reminder-dialog-title">Reminder Center</h2>
+              <p class="reminder-dialog-subtitle">Stay ahead of weekly routines, month-end tasks, and quarter closes.</p>
+            </div>
+            <button
+              type="button"
+              class="lm-tab"
+              onclick="closeReminderPanel()"
+            >
+              <i class="fa-solid fa-xmark"></i>
+              <span>Close</span>
+            </button>
+          </header>
+
+          <div class="reminder-menubar" role="tablist" aria-label="Reminder views">
+            <button id="reminderMenuDue" type="button" onclick="switchReminderView('due')" class="reminder-menu-btn reminder-menu-btn-active">
+              Due Today
+              <span id="reminderCountDue" class="reminder-menu-count">0</span>
+            </button>
+            <button id="reminderMenuWeekly" type="button" onclick="switchReminderView('weekly')" class="reminder-menu-btn">
+              Weekly
+              <span id="reminderCountWeekly" class="reminder-menu-count">0</span>
+            </button>
+            <button id="reminderMenuMonthly" type="button" onclick="switchReminderView('monthly')" class="reminder-menu-btn">
+              Monthly
+              <span id="reminderCountMonthly" class="reminder-menu-count">0</span>
+            </button>
+            <button id="reminderMenuQuarterly" type="button" onclick="switchReminderView('quarterly')" class="reminder-menu-btn">
+              Quarterly
+              <span id="reminderCountQuarterly" class="reminder-menu-count">0</span>
+            </button>
+          </div>
+
+          <div class="reminder-dialog-body">
+            <div id="reminderViewDue" class="reminder-view">
+              <section class="reminder-section">
+                <div class="reminder-section-head">
+                  <div>
+                    <p class="reminder-section-kicker">Home</p>
+                    <h3 class="reminder-section-title">Due Today</h3>
+                    <p class="reminder-section-subtitle">All reminders that trigger today.</p>
+                  </div>
+                </div>
+                <div id="dueRemindersList" class="reminder-list"></div>
+                <div id="noDueReminders" class="reminder-empty">
+                  <div class="reminder-empty-title">No reminders due today</div>
+                  <div class="reminder-empty-description">Use Weekly, Monthly, or Quarterly tabs to add reminders.</div>
+                </div>
+              </section>
+            </div>
+
+            <div id="reminderViewWeekly" class="reminder-view hidden">
+              <section class="reminder-section">
+                <div class="reminder-section-head">
+                  <div>
+                    <p class="reminder-section-kicker">Cadence</p>
+                    <h3 class="reminder-section-title">Weekly</h3>
+                    <p class="reminder-section-subtitle">Set a weekday pulse for recurring tasks.</p>
+                  </div>
+                  <button
+                    id="showWeeklyFormBtn"
+                    onclick="toggleAddWeeklyForm()"
+                    class="reminder-btn"
+                  >
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add weekly</span>
+                  </button>
+                </div>
+
+                <div id="weeklyFormContainer" class="reminder-form hidden">
+                  <div class="reminder-form-grid">
+                    <div class="reminder-field">
+                      <label for="weeklyTitle" class="reminder-label">Title</label>
+                      <input
+                        type="text"
+                        id="weeklyTitle"
+                        class="reminder-input"
+                        placeholder="e.g., Team sync"
+                      />
+                    </div>
+                    <div class="reminder-field">
+                      <label for="weeklyDescription" class="reminder-label">Description</label>
+                      <textarea
+                        id="weeklyDescription"
+                        class="reminder-input reminder-textarea"
+                        placeholder="Optional notes"
+                      ></textarea>
+                    </div>
+                    <div class="reminder-field">
+                      <label for="weeklyDay" class="reminder-label">Day of week</label>
+                      <select id="weeklyDay" class="reminder-select">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="reminder-form-actions">
+                    <button id="weeklySubmitBtn" onclick="addWeeklyReminder()" class="reminder-submit-btn">
+                      <i class="fa-solid fa-check"></i>
+                      Save weekly reminder
+                    </button>
+                  </div>
+                </div>
+
+                <div id="weeklyRemindersList" class="reminder-list"></div>
+                <div id="noWeeklyReminders" class="reminder-empty">
+                  <div class="reminder-empty-title">No weekly reminders yet</div>
+                  <div class="reminder-empty-description">Add a weekly cadence to get started.</div>
+                </div>
+              </section>
+            </div>
+
+            <div id="reminderViewMonthly" class="reminder-view hidden">
+              <section class="reminder-section">
+                <div class="reminder-section-head">
+                  <div>
+                    <p class="reminder-section-kicker">Month end</p>
+                    <h3 class="reminder-section-title">Monthly</h3>
+                    <p class="reminder-section-subtitle">Perfect for reports and recurring month-end wrap ups.</p>
+                  </div>
+                  <button
+                    id="showMonthlyFormBtn"
+                    onclick="toggleAddMonthlyForm()"
+                    class="reminder-btn"
+                  >
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add monthly</span>
+                  </button>
+                </div>
+
+                <div id="monthlyFormContainer" class="reminder-form hidden">
+                  <div class="reminder-form-grid">
+                    <div class="reminder-field">
+                      <label for="monthlyTitle" class="reminder-label">Title</label>
+                      <input
+                        type="text"
+                        id="monthlyTitle"
+                        class="reminder-input"
+                        placeholder="e.g., Monthly report"
+                      />
+                    </div>
+                    <div class="reminder-field">
+                      <label for="monthlyDescription" class="reminder-label">Description</label>
+                      <textarea
+                        id="monthlyDescription"
+                        class="reminder-input reminder-textarea"
+                        placeholder="Optional notes"
+                      ></textarea>
+                    </div>
+                  </div>
+                  <div class="reminder-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                      <div class="reminder-note-title">Auto-scheduled for month end</div>
+                      <div class="reminder-note-text">Triggers on the last day of every month.</div>
+                    </div>
+                  </div>
+                  <div class="reminder-form-actions">
+                    <button id="monthlySubmitBtn" onclick="addMonthlyReminder()" class="reminder-submit-btn">
+                      <i class="fa-solid fa-check"></i>
+                      Save monthly reminder
+                    </button>
+                  </div>
+                </div>
+
+                <div id="monthlyRemindersList" class="reminder-list"></div>
+                <div id="noMonthlyReminders" class="reminder-empty">
+                  <div class="reminder-empty-title">No monthly reminders yet</div>
+                  <div class="reminder-empty-description">Add a month-end task to see it here.</div>
+                </div>
+              </section>
+            </div>
+
+            <div id="reminderViewQuarterly" class="reminder-view hidden">
+              <section class="reminder-section">
+                <div class="reminder-section-head">
+                  <div>
+                    <p class="reminder-section-kicker">Quarter close</p>
+                    <h3 class="reminder-section-title">Quarterly</h3>
+                    <p class="reminder-section-subtitle">Capture end-of-quarter milestones and reviews.</p>
+                  </div>
+                  <button
+                    id="showQuarterlyFormBtn"
+                    onclick="toggleAddQuarterlyForm()"
+                    class="reminder-btn"
+                  >
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add quarterly</span>
+                  </button>
+                </div>
+
+                <div id="quarterlyFormContainer" class="reminder-form hidden">
+                  <div class="reminder-form-grid">
+                    <div class="reminder-field">
+                      <label for="quarterlyTitle" class="reminder-label">Title</label>
+                      <input
+                        type="text"
+                        id="quarterlyTitle"
+                        class="reminder-input"
+                        placeholder="e.g., Q2 review"
+                      />
+                    </div>
+                    <div class="reminder-field">
+                      <label for="quarterlyDescription" class="reminder-label">Description</label>
+                      <textarea
+                        id="quarterlyDescription"
+                        class="reminder-input reminder-textarea"
+                        placeholder="Optional notes"
+                      ></textarea>
+                    </div>
+                    <div class="reminder-field">
+                      <label for="quarterlyMonth" class="reminder-label">Quarter end</label>
+                      <select id="quarterlyMonth" class="reminder-select">
+                        <option value="3">Q1 (March 31)</option>
+                        <option value="6">Q2 (June 30)</option>
+                        <option value="9">Q3 (September 30)</option>
+                        <option value="12">Q4 (December 31)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="reminder-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div>
+                      <div class="reminder-note-title">Auto-scheduled for quarter end</div>
+                      <div class="reminder-note-text">Triggers on the last day of the selected quarter.</div>
+                    </div>
+                  </div>
+                  <div class="reminder-form-actions">
+                    <button id="quarterlySubmitBtn" onclick="addQuarterlyReminder()" class="reminder-submit-btn">
+                      <i class="fa-solid fa-check"></i>
+                      Save quarterly reminder
+                    </button>
+                  </div>
+                </div>
+
+                <div id="quarterlyRemindersList" class="reminder-list"></div>
+                <div id="noQuarterlyReminders" class="reminder-empty">
+                  <div class="reminder-empty-title">No quarterly reminders yet</div>
+                  <div class="reminder-empty-description">Add a quarterly checkpoint to see it here.</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Panel Overlay -->
+    <div id="kpiOverlay" class="kpi-overlay" aria-hidden="true">
+      <div class="kpi-backdrop" onclick="closeKpiPanel()" aria-hidden="true"></div>
+      <div class="kpi-dialog" role="dialog" aria-modal="true" aria-labelledby="kpiDialogTitle">
+        <header class="kpi-dialog-header">
+          <h2 id="kpiDialogTitle" class="kpi-dialog-title">KPI Tracking</h2>
+          <div class="kpi-header-actions">
+            <button type="button" id="kpiPanelSwitchBtn" class="kpi-header-switch" onclick="switchKpiPanelTab()">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>KPI Info</span>
+            </button>
+            <button type="button" id="kpiHeaderSaveBtn" class="kpi-header-save hidden" onclick="saveKpiInfoContent()">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Save Info</span>
+            </button>
+            <button type="button" class="lm-tab" onclick="closeKpiPanel()">
+              <i class="fa-solid fa-xmark"></i>
+              <span>Close</span>
+            </button>
+          </div>
+        </header>
+        <div class="kpi-controls">
+          <div class="kpi-control-group">
+            <label class="kpi-control-label">Site</label>
+            <span id="kpiSiteLabel" class="kpi-select" style="display: inline-block; cursor: default;">
+              <!-- Site set dynamically -->
+            </span>
+          </div>
+          <div class="kpi-control-group" style="margin-left: auto;">
+            <label class="kpi-control-label">Month</label>
+            <div class="kpi-month-nav">
+              <button type="button" class="kpi-month-btn" onclick="changeKpiMonth('prev')" aria-label="Previous month">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <span id="kpiMonthDisplay" class="kpi-month-display">January 2026</span>
+              <button type="button" class="kpi-month-btn" onclick="changeKpiMonth('next')" aria-label="Next month">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-dialog-body">
+          <div id="kpiCategories">
+            <!-- KPI categories loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="leaveLoginModal" class="fixed inset-0 z-50" aria-hidden="true">
+      <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeLeaveLogin()"></div>
+      <div class="fixed left-0 right-0 top-0 z-50 flex items-start justify-center pt-4 px-4 overflow-y-auto max-h-screen">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md my-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+          <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-white">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-bold text-slate-800">Login</h2>
+              <button type="button" class="lm-tab" onclick="closeLeaveLogin()">
+                <i class="fa-solid fa-xmark"></i>
+                <span>Close</span>
+              </button>
+            </div>
+          </div>
+          
+          <form id="staffLoginForm" onsubmit="handleStaffLogin(event)" class="p-6 space-y-4">
+            <div>
+              <div class="form-label mb-2">Select Your Site</div>
+              <div id="loginSiteGrid" class="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 bg-slate-50 rounded-lg border border-slate-200">
+                <!-- Sites will be loaded here as radio buttons -->
+              </div>
+            </div>
+            
+            <div>
+              <div class="form-label">Select Your Role</div>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="relative cursor-pointer">
+                  <input type="radio" name="loginRole" value="Manager" class="sr-only peer" required />
+                  <div class="border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 rounded-lg p-3 text-center transition-all">
+                    <i class="fa-solid fa-user-tie text-2xl text-blue-600 mb-2"></i>
+                    <div class="text-sm font-bold">Manager</div>
+                  </div>
+                </label>
+                <label class="relative cursor-pointer">
+                  <input type="radio" name="loginRole" value="Assistant Manager" class="sr-only peer" required />
+                  <div class="border-2 border-slate-200 peer-checked:border-green-500 peer-checked:bg-green-50 rounded-lg p-3 text-center transition-all">
+                    <i class="fa-solid fa-user-check text-2xl text-green-600 mb-2"></i>
+                    <div class="text-sm font-bold">Asst. Manager</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <label class="flex items-center gap-2 p-2.5 rounded-lg border border-cyan-200 bg-cyan-50 cursor-pointer">
+              <input
+                type="checkbox"
+                id="loginNadi4uTogether"
+                onchange="toggleLeaveNadi4uPasswordField(this.checked)"
+                class="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500"
+              />
+              <span class="text-[11px] font-semibold text-cyan-900 leading-none">
+                Login NADI APP
+              </span>
+            </label>
+
+            <div id="loginNadi4uEmailWrap" class="hidden">
+              <label for="loginNadi4uEmail" class="form-label">NADI APP Email</label>
+              <input
+                type="text"
+                id="loginNadi4uEmail"
+                class="form-input bg-slate-100"
+                placeholder="Select site and role first"
+                readonly
+              />
+            </div>
+
+            <div id="loginNadi4uPasswordWrap" class="hidden">
+              <label for="loginNadi4uPassword" class="form-label">NADI APP Password</label>
+              <input
+                type="password"
+                id="loginNadi4uPassword"
+                class="form-input"
+                placeholder="Enter NADI APP password"
+                autocomplete="current-password"
+              />
+              <label class="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="loginNadi4uShowPassword"
+                  onchange="toggleLeaveNadi4uPasswordVisibility(this.checked)"
+                  class="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500"
+                />
+                <span>Show password</span>
+              </label>
+            </div>
+
+            <button type="submit" class="w-full btn btn-primary btn-lg">
+              <i class="fa-solid fa-right-to-bracket"></i> Login
+            </button>
+            
+            <div class="relative">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-slate-200"></div>
+              </div>
+              <div class="relative flex justify-center text-xs">
+                <span class="bg-white px-2 text-slate-500 font-semibold">or</span>
+              </div>
+            </div>
+            
+            <button type="button" onclick="showSupervisorLogin()" class="w-full text-sm text-slate-600 hover:text-nadi font-semibold py-2 hover:bg-slate-50 rounded transition-colors">
+              <i class="fa-solid fa-user-shield mr-1"></i> Login as Supervisor
+            </button>
+          </form>
+          
+          <!-- Supervisor Login Form (Hidden by default) -->
+          <form id="supervisorLoginForm" onsubmit="handleSupervisorLogin(event)" class="p-6 space-y-4 hidden" autocomplete="off">
+            <div>
+              <label for="supervisorUsername" class="form-label">Supervisor Username</label>
+              <input type="text" id="supervisorUsername" class="form-input" placeholder="Enter username" required autocomplete="off" />
+            </div>
+            
+            <div>
+              <label for="supervisorPassword" class="form-label">Password</label>
+              <input type="password" id="supervisorPassword" class="form-input" placeholder="Enter password" required autocomplete="off" />
+            </div>
+            
+            <button type="submit" class="w-full btn btn-primary btn-lg">
+              <i class="fa-solid fa-shield-halved"></i> Login as Supervisor
+            </button>
+            
+            <button type="button" onclick="showStaffLogin()" class="w-full text-sm text-slate-600 hover:text-blue-600 font-semibold py-2">
+              <i class="fa-solid fa-arrow-left text-xs mr-1"></i> Back to Staff Login
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load scripts -->
+    <!-- 1. Security utilities -->
+    <script src="js/password-utils.js"></script>
+    
+    <!-- 2. Application configuration (includes Supabase credentials) -->
+    <script src="js/config.js"></script>
+    <script src="js/clipboard-utils.js"></script>
+    
+    <!-- 3. Application logic -->
+    <script src="js/app.js"></script>
+    <script src="js/leave-integrated.js"></script>
+    <script src="js/reminder-system.js"></script>
+    <script src="js/kpi-system.js"></script>
+  </body>
+</html>
