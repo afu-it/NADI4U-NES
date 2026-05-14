@@ -4892,6 +4892,21 @@ function isTopAlignedPrioritySection(section) {
   return header.includes("kpi") && header.includes("reminder");
 }
 
+function normalizeBookmarkLabel(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function shouldHideBookmarkButton(button) {
+  const normalizedLabel = normalizeBookmarkLabel(button?.label);
+  return normalizedLabel.includes("webmail") && normalizedLabel.includes("samudra");
+}
+
+function getDisplayBookmarkLabel(label) {
+  const normalizedLabel = normalizeBookmarkLabel(label);
+  if (normalizedLabel === "spx samudra") return "SPX Collection";
+  return label || "";
+}
+
 function getBookmarkSectionsForMenu() {
   if (!Array.isArray(siteSettings.sections)) return [];
 
@@ -4913,8 +4928,13 @@ function getBookmarkSectionsForMenu() {
                 button &&
                 button.label &&
                 button.url &&
-                Number(button.col) === columnIndex,
+                Number(button.col) === columnIndex &&
+                !shouldHideBookmarkButton(button),
             )
+            .map((button) => ({
+              ...button,
+              label: getDisplayBookmarkLabel(button.label),
+            }))
             .slice()
             .sort(
               (left, right) =>
@@ -5183,7 +5203,13 @@ function renderCustomLinks() {
         columnDiv.className = "flex flex-col gap-3 min-w-0";
 
         const colButtons = sec.buttons
-          ? sec.buttons.filter((b) => b.col === c).sort((a, b) => a.row - b.row)
+          ? sec.buttons
+              .filter((b) => b.col === c && !shouldHideBookmarkButton(b))
+              .map((b) => ({
+                ...b,
+                label: getDisplayBookmarkLabel(b.label),
+              }))
+              .sort((a, b) => a.row - b.row)
           : [];
 
         if (colButtons.length > 0) {
