@@ -1789,55 +1789,6 @@
       </div>
     </div>
 
-    <!-- KPI Panel Overlay -->
-    <div id="kpiOverlay" class="kpi-overlay" aria-hidden="true">
-      <div class="kpi-backdrop" onclick="closeKpiPanel()" aria-hidden="true"></div>
-      <div class="kpi-dialog" role="dialog" aria-modal="true" aria-labelledby="kpiDialogTitle">
-        <header class="kpi-dialog-header">
-          <h2 id="kpiDialogTitle" class="kpi-dialog-title">KPI Tracking</h2>
-          <div class="kpi-header-actions">
-            <button type="button" id="kpiPanelSwitchBtn" class="kpi-header-switch" onclick="switchKpiPanelTab()">
-              <i class="fa-solid fa-circle-info"></i>
-              <span>KPI Info</span>
-            </button>
-            <button type="button" id="kpiHeaderSaveBtn" class="kpi-header-save hidden" onclick="saveKpiInfoContent()">
-              <i class="fa-solid fa-floppy-disk"></i>
-              <span>Save Info</span>
-            </button>
-            <button type="button" class="lm-tab" onclick="closeKpiPanel()">
-              <i class="fa-solid fa-xmark"></i>
-              <span>Close</span>
-            </button>
-          </div>
-        </header>
-        <div class="kpi-controls">
-          <div class="kpi-control-group">
-            <label class="kpi-control-label">Site</label>
-            <span id="kpiSiteLabel" class="kpi-select" style="display: inline-block; cursor: default;">
-              <!-- Site set dynamically -->
-            </span>
-          </div>
-          <div class="kpi-control-group" style="margin-left: auto;">
-            <label class="kpi-control-label">Month</label>
-            <div class="kpi-month-nav">
-              <button type="button" class="kpi-month-btn" onclick="changeKpiMonth('prev')" aria-label="Previous month">
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-              </button>
-              <span id="kpiMonthDisplay" class="kpi-month-display">January 2026</span>
-              <button type="button" class="kpi-month-btn" onclick="changeKpiMonth('next')" aria-label="Next month">
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="kpi-dialog-body">
-          <div id="kpiCategories">
-            <!-- KPI categories loaded dynamically -->
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Load scripts -->
     <!-- 1. Security utilities -->
     <script src="js/password-utils.js"></script>
